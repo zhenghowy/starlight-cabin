@@ -1,0 +1,28 @@
+{
+  "name": "starlight-cabin",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -n server,web -k \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "NODE_ENV=development PORT=8787 node server/index.js",
+    "dev:client": "vite --host 0.0.0.0 --port 43123 --strictPort",
+    "build": "vite build",
+    "start": "NODE_ENV=production node server/index.js",
+    "test": "node --test shared/game.test.js server/auth.test.js",
+    "lint": "oxlint"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "concurrently": "^9.2.1",
+    "oxlint": "^1.89.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "vite": "^8.3.5"
+  }
+}
