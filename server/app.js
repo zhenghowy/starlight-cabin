@@ -307,7 +307,7 @@ export function createApp({
       let error = ''
       const store = await repo.updateSave(req.user.id, (current) => {
         const fresh = refreshDaily(current)
-        const result = addTask(fresh, req.body?.name, req.body?.type, 3)
+        const result = addTask(fresh, req.body?.name, req.body?.type, req.body?.reward, undefined, req.body?.minutes)
         if (!result.ok) {
           error = result.reason === 'type' ? '请选择学识、能量、秩序或储蓄' : result.reason === 'long' ? '名字太长了，收一收' : '先给这件小事起个名字'
           return fresh
@@ -338,7 +338,7 @@ export function createApp({
       let error = ''
       const store = await repo.updateSave(req.user.id, (current) => {
         const fresh = refreshDaily(current)
-        const result = addShopItem(fresh, req.body?.name, req.body?.cost)
+        const result = addShopItem(fresh, req.body?.name, req.body?.cost, undefined, req.body?.minutes)
         if (!result.ok) {
           error = result.reason === 'long' ? '名字太长了，收一收' : '先给心愿起个名字'
           return fresh

@@ -8,6 +8,12 @@ export const STORAGE_KEY = 'starlight_cabin_store'
 export const EXP_PER_LEVEL = 20
 export const TIME_ZONE = 'Asia/Shanghai'
 export const LEVEL_WORDS = ['一颗种子', '小小嫩芽', '舒展的树', '繁茂的树', '参天巨木']
+/** 约定：1 分钟 = 1 枚松果。分钟只负责建议金额，金额仍可另填。 */
+export const COINS_PER_MINUTE = 1
+export const COIN_MIN = -9999
+export const COIN_MAX = 9999
+export const BALANCE_MIN = -999999
+export const BALANCE_MAX = 999999
 
 export const ATTR_META = {
   study: { name: '学识', icon: '📜', color: '#6B8E6B', source: '林间图书馆' },
@@ -108,8 +114,7 @@ function healAttr(attr) {
 export function normalize(input, now = new Date()) {
   if (!input || !input.user_profile) return emptyStore(now)
   const s = clone(input)
-  const cones = Math.round(Number(s.user_profile.pine_cones))
-  s.user_profile.pine_cones = Number.isFinite(cones) && cones >= 0 ? cones : 0
+  s.user_profile.pine_cones = clampBalance(s.user_profile.pine_cones)
   s.user_profile.attributes = s.user_profile.attributes || {}
   for (const key of ATTR_TYPES) {
     s.user_profile.attributes[key] = healAttr(s.user_profile.attributes[key])
@@ -119,34 +124,115 @@ export function normalize(input, now = new Date()) {
   if (!Array.isArray(s.history_logs)) s.history_logs = []
   s.tasks = s.tasks
     .filter((t) => t && typeof t.id === 'string' && typeof t.name === 'string' && ATTR_META[t.type])
-    .map((t) => ({
-      id: t.id,
-      name: String(t.name),
-      type: t.type,
-      reward_cones: clampReward(t.reward_cones),
-      is_completed: !!t.is_completed
-    }))
+    .map((t) => {
+      const task = {
+        id: t.id,
+        name: String(t.name),
+        type: t.type,
+        reward_cones: clampReward(t.reward_cones),
+        is_completed: !!t.is_completed
+      }
+      const minutes = clampMinutes(t.minutes)
+      if (minutes !== null) task.minutes = minutes
+      return task
+    })
   s.shop_items = s.shop_items
     .filter((item) => item && typeof item.id === 'string' && typeof item.name === 'string')
-    .map((item) => ({
-      id: item.id,
-      name: String(item.name),
-      cost: clampCost(item.cost)
-    }))
+    .map((item) => {
+      const next = {
+        id: item.id,
+        name: String(item.name),
+        cost: clampCost(item.cost)
+      }
+      const minutes = clampMinutes(item.minutes)
+      if (minutes !== null) next.minutes = minutes
+      return next
+    })
   if (typeof s.last_open_date !== 'string') s.last_open_date = today(now)
   return s
 }
 
+function blankAmount(value) {
+  if (value === '' || value === null || value === undefined) return true
+  return typeof value === 'string' && (value.trim() === '' || value.trim() === '-')
+}
+
+/**
+ * 把输入收成有限整数。空值用 fallback；超出范围就收到边界。
+ * 0 和负数都保留：负数表示放纵或坏习惯。
+ */
+export function parseSignedInt(value, fallback) {
+  if (blankAmount(value)) return fallback
+  const n = Math.round(Number(typeof value === 'string' ? value.trim() : value))
+  if (!Number.isFinite(n)) return fallback
+  return Math.min(COIN_MAX, Math.max(COIN_MIN, n))
+}
+
+export function clampBalance(cones) {
+  const n = Math.round(Number(cones))
+  if (!Number.isFinite(n)) return 0
+  return Math.min(BALANCE_MAX, Math.max(BALANCE_MIN, n))
+}
+
+export function clampMinutes(minutes) {
+  if (blankAmount(minutes)) return null
+  return parseSignedInt(minutes, null)
+}
+
+export function coinsFromMinutes(minutes) {
+  const parsed = clampMinutes(minutes)
+  if (parsed === null) return null
+  return parseSignedInt(parsed * COINS_PER_MINUTE, parsed)
+}
+
 export function clampCost(cost) {
-  const n = Math.round(Number(cost))
-  if (!Number.isFinite(n) || n < 0) return 0
-  return Math.min(9999, n)
+  return parseSignedInt(cost, 0)
 }
 
 export function clampReward(reward) {
-  const n = Math.round(Number(reward))
-  if (!Number.isFinite(n) || n <= 0) return 3
-  return Math.min(99, n)
+  return parseSignedInt(reward, 3)
+}
+
+export function resolveReward(reward, minutes) {
+  const suggested = coinsFromMinutes(minutes)
+  if (blankAmount(reward)) return suggested === null ? 3 : suggested
+  return parseSignedInt(reward, suggested === null ? 3 : suggested)
+}
+
+export function resolveCost(cost, minutes) {
+  const suggested = coinsFromMinutes(minutes)
+  if (blankAmount(cost)) return suggested === null ? 0 : suggested
+  return parseSignedInt(cost, suggested === null ? 0 : suggested)
+}
+
+export function formatConeDelta(amount) {
+  const n = Number(amount)
+  if (!Number.isFinite(n) || n === 0) return '0'
+  if (n > 0) return `+${n}`
+  return String(n)
+}
+
+export function formatConeLine(amount, minutes) {
+  const coins = `${formatConeDelta(amount)} 松果`
+  if (minutes === null || minutes === undefined || minutes === '') return coins
+  return `${minutes} 分钟 · ${coins}`
+}
+
+/** 表单里没填完的负号不当成数字。空着就返回 undefined，方便省略字段。 */
+export function readSignedField(value) {
+  if (value === '' || value === '-' || value === null || value === undefined) return undefined
+  const n = Number(value)
+  return Number.isFinite(n) ? n : undefined
+}
+
+/** 输入框里只留一个可选的负号和整数，并收到金币上下限内。 */
+export function sanitizeSignedInput(raw) {
+  const text = String(raw ?? '')
+  const negative = text.trimStart().startsWith('-')
+  const digits = text.replace(/\D/g, '')
+  if (!digits) return negative ? '-' : ''
+  const n = Math.min(COIN_MAX, Number(digits))
+  return `${negative ? '-' : ''}${n}`
 }
 
 export function attrProgress(attr) {
@@ -176,18 +262,20 @@ export function checkIn(store, taskId, now = new Date()) {
   if (!task || task.is_completed) return null
 
   task.is_completed = true
-  s.user_profile.pine_cones += task.reward_cones
+  const delta = task.reward_cones
+  s.user_profile.pine_cones = clampBalance(s.user_profile.pine_cones + delta)
 
   const attr = s.user_profile.attributes[task.type]
-  attr.exp += task.reward_cones
-
   let leveled = false
-  let guard = 0
-  while (attr.exp >= attr.level * EXP_PER_LEVEL && guard < 40) {
-    attr.exp -= attr.level * EXP_PER_LEVEL
-    attr.level += 1
-    leveled = true
-    guard += 1
+  if (delta > 0) {
+    attr.exp += delta
+    let guard = 0
+    while (attr.exp >= attr.level * EXP_PER_LEVEL && guard < 40) {
+      attr.exp -= attr.level * EXP_PER_LEVEL
+      attr.level += 1
+      leveled = true
+      guard += 1
+    }
   }
 
   const t = today(now)
@@ -204,32 +292,38 @@ export function checkIn(store, taskId, now = new Date()) {
 
 export function checkInToast(result) {
   if (!result) return ''
+  const n = result.task.reward_cones
   if (result.leveled) {
     const word = LEVEL_WORDS[Math.min(4, result.level - 1)]
     return `${result.attrName} 升到 ${result.level} 级了！${word}正在生长`
   }
-  return `${result.attrName} +${result.task.reward_cones}，松果币 +${result.task.reward_cones}`
+  if (n < 0) return `放纵记下了，松果币 ${n}`
+  if (n === 0) return '记下了，松果币没有变化'
+  return `${result.attrName} +${n}，松果币 +${n}`
 }
 
 export function redeem(store, itemId) {
   const s = normalize(store)
   const item = s.shop_items.find((x) => x.id === itemId)
   if (!item) return { ok: false }
-  if (s.user_profile.pine_cones < item.cost) return { ok: false, reason: 'poor' }
-  s.user_profile.pine_cones -= item.cost
+  if (item.cost > 0 && s.user_profile.pine_cones < item.cost) return { ok: false, reason: 'poor' }
+  s.user_profile.pine_cones = clampBalance(s.user_profile.pine_cones - item.cost)
   return { ok: true, store: s, item: { ...item } }
 }
 
-export function addShopItem(store, name, cost, now = new Date()) {
+export function addShopItem(store, name, cost, now = new Date(), minutes) {
   const s = normalize(store, now)
   const trimmed = String(name || '').trim()
   if (!trimmed) return { ok: false, reason: 'name' }
   if (trimmed.length > 40) return { ok: false, reason: 'long' }
-  s.shop_items.push({
+  const parsedMinutes = clampMinutes(minutes)
+  const item = {
     id: nextId('s', now),
     name: trimmed,
-    cost: clampCost(cost)
-  })
+    cost: resolveCost(cost, parsedMinutes)
+  }
+  if (parsedMinutes !== null) item.minutes = parsedMinutes
+  s.shop_items.push(item)
   return { ok: true, store: s }
 }
 
@@ -239,19 +333,22 @@ export function removeShopItem(store, id) {
   return s
 }
 
-export function addTask(store, name, type, reward, now = new Date()) {
+export function addTask(store, name, type, reward, now = new Date(), minutes) {
   const s = normalize(store, now)
   const trimmed = String(name || '').trim()
   if (!ATTR_META[type]) return { ok: false, reason: 'type' }
   if (!trimmed) return { ok: false, reason: 'name' }
   if (trimmed.length > 40) return { ok: false, reason: 'long' }
-  s.tasks.push({
+  const parsedMinutes = clampMinutes(minutes)
+  const task = {
     id: nextId('t', now),
     name: trimmed,
     type,
-    reward_cones: clampReward(reward),
+    reward_cones: resolveReward(reward, parsedMinutes),
     is_completed: false
-  })
+  }
+  if (parsedMinutes !== null) task.minutes = parsedMinutes
+  s.tasks.push(task)
   return { ok: true, store: s }
 }
 
@@ -316,7 +413,7 @@ export function presentShop(store) {
     pineCones: s.user_profile.pine_cones,
     items: s.shop_items.map((item) => ({
       ...item,
-      affordable: s.user_profile.pine_cones >= item.cost
+      affordable: item.cost <= 0 || s.user_profile.pine_cones >= item.cost
     }))
   }
 }
@@ -420,12 +517,16 @@ export function presentActivity(store, now = new Date()) {
     todayTotal: home.tasks.length,
     recentTasks: home.tasks
       .filter((task) => task.is_completed)
-      .map((task) => ({
-        name: task.name,
-        type: task.type,
-        icon: ATTR_META[task.type].icon,
-        reward_cones: task.reward_cones
-      })),
+      .map((task) => {
+        const row = {
+          name: task.name,
+          type: task.type,
+          icon: ATTR_META[task.type].icon,
+          reward_cones: task.reward_cones
+        }
+        if (task.minutes != null) row.minutes = task.minutes
+        return row
+      }),
     recentDays,
     scene: home.scene
   }

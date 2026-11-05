@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
   addDays,
+  addShopItem,
   addTask,
   attrProgress,
   buildGrid,
@@ -9,15 +10,23 @@ import {
   calcStreak,
   checkIn,
   checkInToast,
+  clampCost,
+  clampMinutes,
+  clampReward,
   compareActivity,
   emptyStore,
+  formatConeLine,
+  normalize,
   poem,
   presentActivity,
   presentHome,
   presentLog,
+  presentShop,
   redeem,
   refreshDaily,
   removeTask,
+  readSignedField,
+  sanitizeSignedInput,
   today,
   weekday
 } from './game.js'
@@ -173,6 +182,110 @@ test('public activity shows progress without wishes or unfinished tasks', () => 
     { username: '甲', totalLevel: 8, streak: 0, pineCones: 1 }
   ].sort(compareActivity)
   assert.deepEqual(order.map((item) => item.username), ['甲', '乙'])
+})
+
+test('coin amounts stay custom, including zero and negatives', () => {
+  assert.equal(clampReward(undefined), 3)
+  assert.equal(clampReward(''), 3)
+  assert.equal(clampReward('abc'), 3)
+  assert.equal(clampReward(0), 0)
+  assert.equal(clampReward(-8), -8)
+  assert.equal(clampReward(' -12.6 '), -13)
+  assert.equal(clampReward(100000), 9999)
+  assert.equal(clampReward(-100000), -9999)
+  assert.equal(clampCost(-5), -5)
+  assert.equal(clampCost(''), 0)
+  assert.equal(clampMinutes(''), null)
+  assert.equal(clampMinutes(10), 10)
+  assert.equal(clampMinutes(-3), -3)
+  assert.equal(sanitizeSignedInput('0012'), '12')
+  assert.equal(sanitizeSignedInput('-10'), '-10')
+  assert.equal(sanitizeSignedInput('-'), '-')
+  assert.equal(sanitizeSignedInput('99999'), '9999')
+  assert.equal(formatConeLine(-4, 10), '10 分钟 · -4 松果')
+  assert.equal(readSignedField(''), undefined)
+  assert.equal(readSignedField('-'), undefined)
+  assert.equal(readSignedField('-8'), -8)
+  assert.equal(readSignedField('0'), 0)
+})
+
+test('minutes suggest coins one for one, and an override wins', () => {
+  const suggested = addTask(emptyStore(noon), '读二十分钟', 'study', undefined, noon, 20)
+  assert.equal(suggested.ok, true)
+  const planted = suggested.store.tasks.at(-1)
+  assert.equal(planted.reward_cones, 20)
+  assert.equal(planted.minutes, 20)
+
+  const indulgence = addTask(emptyStore(noon), '熬夜刷剧', 'routine', -8, noon, 30)
+  const bad = indulgence.store.tasks.at(-1)
+  assert.equal(bad.reward_cones, -8)
+  assert.equal(bad.minutes, 30)
+
+  const fromNegativeMinutes = addTask(emptyStore(noon), '刷手机', 'routine', '', noon, -15)
+  assert.equal(fromNegativeMinutes.store.tasks.at(-1).reward_cones, -15)
+
+  const wish = addShopItem(emptyStore(noon), '发呆一刻', '', noon, 15)
+  assert.equal(wish.store.shop_items.at(-1).cost, 15)
+  assert.equal(wish.store.shop_items.at(-1).minutes, 15)
+  const refund = addShopItem(emptyStore(noon), '退回一颗', -6, noon)
+  assert.equal(refund.store.shop_items.at(-1).cost, -6)
+  assert.equal('minutes' in refund.store.shop_items.at(-1), false)
+})
+
+test('a negative reward deducts cones and leaves the forest standing', () => {
+  let store = emptyStore(noon)
+  store.user_profile.pine_cones = 5
+  store.user_profile.attributes.routine.exp = 6
+  store.tasks.push({ id: 'bad', name: '熬夜', type: 'routine', reward_cones: -4, minutes: 4, is_completed: false })
+  const result = checkIn(store, 'bad', noon)
+  assert.equal(result.leveled, false)
+  assert.equal(result.store.user_profile.pine_cones, 1)
+  assert.equal(result.store.user_profile.attributes.routine.exp, 6)
+  assert.equal(result.store.user_profile.attributes.routine.level, 1)
+  assert.equal(checkInToast(result), '放纵记下了，松果币 -4')
+  assert.equal(result.store.history_logs.includes('2026-11-03'), true)
+
+  const kept = refreshDaily(result.store, noon)
+  const saved = kept.tasks.find((task) => task.id === 'bad')
+  assert.equal(kept.user_profile.pine_cones, 1)
+  assert.equal(saved.reward_cones, -4)
+  assert.equal(saved.minutes, 4)
+
+  store = emptyStore(noon)
+  store.user_profile.pine_cones = 2
+  store.tasks = [{ id: 'bad', name: '再熬一会', type: 'routine', reward_cones: -5, is_completed: false }]
+  const debt = checkIn(store, 'bad', noon)
+  assert.equal(debt.store.user_profile.pine_cones, -3)
+  assert.equal(normalize(debt.store, noon).user_profile.pine_cones, -3)
+})
+
+test('zero reward changes nothing, and a negative wish returns cones', () => {
+  let store = emptyStore(noon)
+  store.user_profile.pine_cones = 4
+  store.tasks = [{ id: 'quiet', name: '只是记下', type: 'study', reward_cones: 0, is_completed: false }]
+  const quiet = checkIn(store, 'quiet', noon)
+  assert.equal(quiet.store.user_profile.pine_cones, 4)
+  assert.equal(quiet.store.user_profile.attributes.study.exp, 0)
+  assert.equal(checkInToast(quiet), '记下了，松果币没有变化')
+
+  store = emptyStore(noon)
+  store.user_profile.pine_cones = 1
+  store.shop_items.push({ id: 'back', name: '退回', cost: -6 })
+  const shop = presentShop(store)
+  assert.equal(shop.items.find((item) => item.id === 'back').affordable, true)
+  const returned = redeem(store, 'back')
+  assert.equal(returned.ok, true)
+  assert.equal(returned.store.user_profile.pine_cones, 7)
+
+  const old = emptyStore(noon)
+  const healed = normalize(old, noon)
+  assert.equal(healed.user_profile.pine_cones, 0)
+  assert.equal('minutes' in healed.tasks[0], false)
+  assert.equal(healed.tasks[0].reward_cones, 5)
+  assert.equal('minutes' in healed.shop_items[0], false)
+  assert.equal(healed.shop_items[0].cost, 30)
+  old.user_profile.pine_cones = 'nope'
+  assert.equal(normalize(old, noon).user_profile.pine_cones, 0)
 })
 
 test('log view counts distinct recorded days', () => {

@@ -1,8 +1,37 @@
 import { useState } from 'react'
-import { presentShop } from '@shared/game.js'
+import { presentShop, readSignedField } from '@shared/game.js'
+import { CoinFields } from '../components/CoinFields.jsx'
 import { Modal } from '../components/Modal.jsx'
 import { Toast } from '../components/Toast.jsx'
 import { useCabin } from '../context.jsx'
+
+function wishCostLabel(item) {
+  const price = item.cost < 0 ? `🪙 ${item.cost} · 退回` : `🪙 ${item.cost}`
+  if (item.minutes == null) return price
+  return `${item.minutes} 分钟 · ${price}`
+}
+
+function wishDraftCopy(cost, minutes) {
+  const typed = cost === '' || cost === '-' ? null : Number(cost)
+  if (typed === null || !Number.isFinite(typed)) {
+    const minutesValue = minutes === '' || minutes === '-' ? null : Number(minutes)
+    if (minutesValue !== null && Number.isFinite(minutesValue)) {
+      if (minutesValue < 0) return `按分钟先记成退回 ${Math.abs(minutesValue)} 枚松果。`
+      if (minutesValue === 0) return '这件心愿不花松果。'
+      return `按分钟先记 ${minutesValue} 枚松果，还能改。`
+    }
+    return '没填时不花松果。填了分钟就按 1 分钟 1 枚。'
+  }
+  if (typed < 0) return `兑换时退回 ${Math.abs(typed)} 枚松果。`
+  if (typed === 0) return '这件心愿不花松果。'
+  return `兑换时花掉 ${typed} 枚松果。`
+}
+
+function redeemCopy(item) {
+  if (item.cost < 0) return `会把 ${Math.abs(item.cost)} 枚松果退回给你。`
+  if (item.cost === 0) return '这件心愿不花松果，去享受就好。'
+  return `将消耗 ${item.cost} 松果币，换一份现实里的奖励。`
+}
 
 export function ShopPage() {
   const { store, setStore, request } = useCabin()
@@ -10,7 +39,9 @@ export function ShopPage() {
   const [toast, setToast] = useState('')
   const [addOpen, setAddOpen] = useState(false)
   const [name, setName] = useState('')
+  const [minutes, setMinutes] = useState('')
   const [cost, setCost] = useState('')
+  const [costTouched, setCostTouched] = useState(false)
   const [confirmItem, setConfirmItem] = useState(null)
   const [success, setSuccess] = useState(false)
   const [removeId, setRemoveId] = useState('')
@@ -56,12 +87,14 @@ export function ShopPage() {
     try {
       const data = await request('/api/shop', {
         method: 'POST',
-        body: { name: name.trim(), cost: cost.trim() === '' ? 0 : cost }
+        body: { name: name.trim(), minutes: readSignedField(minutes), cost: readSignedField(cost) }
       })
       setStore(data.store)
       setAddOpen(false)
       setName('')
+      setMinutes('')
       setCost('')
+      setCostTouched(false)
     } catch (err) {
       if (err.status !== 401) setFormError(err.message)
     } finally {
@@ -89,7 +122,7 @@ export function ShopPage() {
       <header className="shop-header">
         <div className="cones">
           <span className="cone-icon">🪙</span>
-          <span className="cone-num">{shop.pineCones}</span>
+          <span className={`cone-num ${shop.pineCones < 0 ? 'minus' : ''}`}>{shop.pineCones}</span>
         </div>
         <p className="header-sub">攒下的松果，可以换成现实里的甜</p>
       </header>
@@ -114,7 +147,7 @@ export function ShopPage() {
           >
             <div className="item-left">
               <span className="item-name">{item.name}</span>
-              <span className="item-cost">🪙 {item.cost}</span>
+              <span className={`item-cost ${item.cost < 0 ? 'minus' : ''}`}>{wishCostLabel(item)}</span>
             </div>
             <button type="button" className="mini-remove" aria-label={`移除${item.name}`} onClick={() => setRemoveId(item.id)}>
               ×
@@ -135,6 +168,10 @@ export function ShopPage() {
           className="item item-add"
           onClick={() => {
             setFormError('')
+            setName('')
+            setMinutes('')
+            setCost('')
+            setCostTouched(false)
             setAddOpen(true)
           }}
         >
@@ -149,7 +186,7 @@ export function ShopPage() {
       <Modal
         open={addOpen}
         title="添加一件心愿"
-        description="它需要多少松果？"
+        description={wishDraftCopy(cost, minutes)}
         confirmText="放进铺子"
         cancelText="取消"
         tone="amber"
@@ -161,17 +198,25 @@ export function ShopPage() {
           <span>心愿</span>
           <input maxLength={40} placeholder="例如：喝一杯热可可" value={name} onChange={(event) => setName(event.target.value)} />
         </label>
-        <label className="field">
-          <span>松果</span>
-          <input inputMode="numeric" placeholder="30" value={cost} onChange={(event) => setCost(event.target.value)} />
-        </label>
+        <CoinFields
+          minutes={minutes}
+          amount={cost}
+          amountTouched={costTouched}
+          onMinutes={setMinutes}
+          onAmount={setCost}
+          onAmountTouched={setCostTouched}
+          amountLabel="松果币"
+          positiveLabel="记成负数，兑换时退回"
+          negativeLabel="改成正数，兑换时花掉"
+          hint="1 分钟 = 1 枚松果。填分钟会先写上价格，还能改。正数是花掉的松果，负数兑换时退回。"
+        />
         {formError ? <p className="form-error">{formError}</p> : null}
       </Modal>
 
       <Modal
         open={!!confirmItem}
         title={confirmItem ? `兑换「${confirmItem.name}」` : ''}
-        description={confirmItem ? `将消耗 ${confirmItem.cost} 松果币，换一份现实里的奖励。` : ''}
+        description={confirmItem ? redeemCopy(confirmItem) : ''}
         confirmText="去享受"
         cancelText="再攒攒"
         tone="amber"
