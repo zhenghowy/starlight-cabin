@@ -168,6 +168,71 @@ test('shop redeem and custom wishes stay on that account', async () => {
   }
 })
 
+test('custom minutes and negative habits settle on the account', async () => {
+  const ctx = await start()
+  try {
+    const a = await json(ctx.base, '/api/register', {
+      method: 'POST',
+      body: { username: '夜读', password: 'secret1' }
+    })
+    const earned = await json(ctx.base, '/api/checkin', {
+      method: 'POST',
+      cookie: a.cookie,
+      body: { taskId: 't2' }
+    })
+    assert.equal(earned.data.store.user_profile.pine_cones, 5)
+
+    const suggested = await json(ctx.base, '/api/tasks', {
+      method: 'POST',
+      cookie: a.cookie,
+      body: { name: '读二十分钟', type: 'study', minutes: 20 }
+    })
+    assert.equal(suggested.status, 201)
+    const good = suggested.data.store.tasks.at(-1)
+    assert.equal(good.reward_cones, 20)
+    assert.equal(good.minutes, 20)
+
+    const bad = await json(ctx.base, '/api/tasks', {
+      method: 'POST',
+      cookie: a.cookie,
+      body: { name: '熬夜刷剧', type: 'routine', minutes: 30, reward: -8 }
+    })
+    const habit = bad.data.store.tasks.at(-1)
+    assert.equal(habit.reward_cones, -8)
+    const spent = await json(ctx.base, '/api/checkin', {
+      method: 'POST',
+      cookie: a.cookie,
+      body: { taskId: habit.id }
+    })
+    assert.equal(spent.status, 200)
+    assert.equal(spent.data.store.user_profile.pine_cones, -3)
+    assert.equal(spent.data.store.user_profile.attributes.routine.exp, 0)
+    assert.match(spent.data.toast, /放纵记下了，松果币 -8/)
+
+    const wish = await json(ctx.base, '/api/shop', {
+      method: 'POST',
+      cookie: a.cookie,
+      body: { name: '发呆一刻', minutes: 15 }
+    })
+    assert.equal(wish.data.store.shop_items.at(-1).cost, 15)
+    const refund = await json(ctx.base, '/api/shop', {
+      method: 'POST',
+      cookie: a.cookie,
+      body: { name: '退回一颗', cost: -6 }
+    })
+    const item = refund.data.store.shop_items.at(-1)
+    const back = await json(ctx.base, '/api/redeem', {
+      method: 'POST',
+      cookie: a.cookie,
+      body: { itemId: item.id }
+    })
+    assert.equal(back.status, 200)
+    assert.equal(back.data.store.user_profile.pine_cones, 3)
+  } finally {
+    await ctx.close()
+  }
+})
+
 test('board is login-only and hides secrets', async () => {
   const ctx = await start()
   try {

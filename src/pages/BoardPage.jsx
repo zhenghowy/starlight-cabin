@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { formatConeLine } from '@shared/game.js'
 import { Scene } from '../components/Scene.jsx'
 import { useCabin } from '../context.jsx'
 
@@ -119,7 +120,9 @@ export function BoardPage({ userId = '' }) {
                   <span className="task-name">
                     {task.icon} {task.name}
                   </span>
-                  <span className="task-reward">+{task.reward_cones} 松果</span>
+                  <span className={`task-reward ${task.reward_cones < 0 ? 'minus' : ''}`}>
+                    {formatConeLine(task.reward_cones, task.minutes)}
+                  </span>
                 </div>
               </article>
             ))

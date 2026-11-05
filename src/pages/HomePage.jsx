@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { ATTR_META, presentHome, TYPE_SHEET } from '@shared/game.js'
+import { ATTR_META, formatConeLine, presentHome, readSignedField, TYPE_SHEET } from '@shared/game.js'
+import { CoinFields } from '../components/CoinFields.jsx'
 import { Modal, Sheet } from '../components/Modal.jsx'
 import { Scene } from '../components/Scene.jsx'
 import { Toast } from '../components/Toast.jsx'
@@ -20,6 +21,9 @@ export function HomePage() {
   const [draftType, setDraftType] = useState('study')
   const [nameOpen, setNameOpen] = useState(false)
   const [taskName, setTaskName] = useState('')
+  const [minutes, setMinutes] = useState('')
+  const [reward, setReward] = useState('')
+  const [rewardTouched, setRewardTouched] = useState(false)
   const [removeId, setRemoveId] = useState('')
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState('')
@@ -69,6 +73,32 @@ export function HomePage() {
     }
   }
 
+  function resetDraft() {
+    setTaskName('')
+    setMinutes('')
+    setReward('')
+    setRewardTouched(false)
+    setFormError('')
+  }
+
+  function draftCopy() {
+    const meta = ATTR_META[draftType]
+    const lead = `${meta.icon} ${meta.name}`
+    const typed = reward === '' || reward === '-' ? null : Number(reward)
+    if (typed === null || !Number.isFinite(typed)) {
+      const minutesValue = minutes === '' || minutes === '-' ? null : Number(minutes)
+      if (minutesValue !== null && Number.isFinite(minutesValue)) {
+        if (minutesValue < 0) return `${lead} · 按分钟先扣掉 ${Math.abs(minutesValue)} 枚松果`
+        if (minutesValue === 0) return `${lead} · 完成后松果不变`
+        return `${lead} · 按分钟先加上 ${minutesValue} 枚松果`
+      }
+      return `${lead} · 没填时先记 3 枚。填了分钟就按 1 分钟 1 枚`
+    }
+    if (typed < 0) return `${lead} · 这是放纵，完成后扣掉 ${Math.abs(typed)} 枚松果`
+    if (typed === 0) return `${lead} · 完成后松果不变`
+    return `${lead} · 完成后加上 ${typed} 枚松果`
+  }
+
   async function confirmAdd() {
     const name = taskName.trim()
     if (!name) {
@@ -78,10 +108,13 @@ export function HomePage() {
     setBusy(true)
     setFormError('')
     try {
-      const data = await request('/api/tasks', { method: 'POST', body: { name, type: draftType } })
+      const data = await request('/api/tasks', {
+        method: 'POST',
+        body: { name, type: draftType, minutes: readSignedField(minutes), reward: readSignedField(reward) }
+      })
       setStore(data.store)
       setNameOpen(false)
-      setTaskName('')
+      resetDraft()
     } catch (err) {
       if (err.status !== 401) setFormError(err.message)
     } finally {
@@ -96,7 +129,7 @@ export function HomePage() {
       <div className="topbar">
         <div className="cones">
           <span className="cone-icon">🪙</span>
-          <span className="cone-num">{home.pineCones}</span>
+          <span className={`cone-num ${home.pineCones < 0 ? 'minus' : ''}`}>{home.pineCones}</span>
           <span className="cone-label">松果币</span>
         </div>
         <p className="greeting">{home.greeting}</p>
@@ -152,7 +185,7 @@ export function HomePage() {
               <span className="task-dot" style={{ background: ATTR_META[task.type].color }} />
               <div className="task-body">
                 <span className="task-name">{task.name}</span>
-                <span className="task-reward">+{task.reward_cones} 松果</span>
+                <span className={`task-reward ${task.reward_cones < 0 ? 'minus' : ''}`}>{formatConeLine(task.reward_cones, task.minutes)}</span>
               </div>
             </div>
             <button type="button" className="mini-remove" aria-label={`移除${task.name}`} onClick={() => holdRemove(task.id)}>
@@ -197,8 +230,7 @@ export function HomePage() {
         onPick={(type) => {
           setDraftType(type)
           setSheetOpen(false)
-          setTaskName('')
-          setFormError('')
+          resetDraft()
           setNameOpen(true)
         }}
       />
@@ -206,7 +238,7 @@ export function HomePage() {
       <Modal
         open={nameOpen}
         title="种下一件小事"
-        description={`${ATTR_META[draftType].icon} ${ATTR_META[draftType].name} · 完成后 +3 松果`}
+        description={draftCopy()}
         confirmText="种下"
         cancelText="再想想"
         busy={busy}
@@ -224,6 +256,18 @@ export function HomePage() {
             onChange={(event) => setTaskName(event.target.value)}
           />
         </label>
+        <CoinFields
+          minutes={minutes}
+          amount={reward}
+          amountTouched={rewardTouched}
+          onMinutes={setMinutes}
+          onAmount={setReward}
+          onAmountTouched={setRewardTouched}
+          amountLabel="松果币"
+          positiveLabel="这是放纵，记成负数"
+          negativeLabel="改成好事（正数）"
+          hint="1 分钟 = 1 枚松果。填分钟会先写上，还能改。好事用正数，完成时加上；放纵或坏习惯用负数，完成时扣掉。"
+        />
         {formError && nameOpen ? <p className="form-error">{formError}</p> : null}
       </Modal>
 
