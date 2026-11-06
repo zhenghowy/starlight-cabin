@@ -21,6 +21,16 @@ data/*
 
 uploads
 
+# Android 构建产物。侧载钥匙和 Gradle Wrapper 要留在仓库里。
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/captures/
+*.apk
+*.aab
+*.idsig
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

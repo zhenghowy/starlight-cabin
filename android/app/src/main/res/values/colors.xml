@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="dusk">#FF2E4A62</color>
+    <color name="cream">#FFF7F3E9</color>
+    <color name="paper">#FFFFFDF7</color>
+    <color name="ink">#FF4A4038</color>
+    <color name="ink_soft">#FF8C8177</color>
+    <color name="moss">#FF6B8E6B</color>
+    <color name="moon">#FFFFF3D0</color>
+</resources>
