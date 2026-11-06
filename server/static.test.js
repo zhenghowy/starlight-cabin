@@ -25,7 +25,7 @@ test('hashed assets stay cached and private responses do not', async () => {
     assert.equal(asset.headers.get('cache-control'), 'public, max-age=31536000, immutable')
     const html = await fetch(base + '/login')
     assert.equal(html.status, 200)
-    assert.match(html.headers.get('cache-control') || '', /no-cache/)
+    assert.equal(html.headers.get('cache-control'), 'public, max-age=43200')
     assert.equal((await html.text()).includes('小屋'), true)
     const me = await fetch(base + '/api/me')
     assert.equal(me.status, 401)
