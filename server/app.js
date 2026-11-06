@@ -19,6 +19,9 @@ import { createRepository } from './repository.js'
 
 const USERNAME_RE = /^[\p{Script=Han}a-zA-Z0-9_]{2,16}$/u
 const SESSION_SECONDS = 30 * 24 * 60 * 60
+// 页面外壳没有账号数据。短时间再打开时可以先用手机里的副本，不必干等机器醒来。
+// 最多 12 小时后重新向服务器确认，避免旧页面一直留着。接口不使用这条约定。
+const SHELL_CACHE = 'public, max-age=43200'
 
 function parseCookies(header) {
   const out = {}
@@ -426,7 +429,7 @@ export function createApp({
             res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
             return
           }
-          if (file.endsWith('index.html')) res.setHeader('Cache-Control', 'no-cache')
+          if (file.endsWith('index.html')) res.setHeader('Cache-Control', SHELL_CACHE)
           if (file.endsWith('.apk')) {
             res.setHeader('Content-Type', 'application/vnd.android.package-archive')
             res.setHeader('X-Content-Type-Options', 'nosniff')
@@ -438,7 +441,7 @@ export function createApp({
     app.use((req, res, next) => {
       if (req.method !== 'GET' && req.method !== 'HEAD') return next()
       if (req.path.startsWith('/api')) return next()
-      res.setHeader('Cache-Control', 'no-cache')
+      res.setHeader('Cache-Control', SHELL_CACHE)
       res.sendFile(path.join(distDir, 'index.html'), (err) => {
         if (err) next(err)
       })
