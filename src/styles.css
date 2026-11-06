@@ -597,6 +597,42 @@ button:disabled { cursor: default; }
   padding: 8px;
 }
 
+.apk-note,
+.apk-bar {
+  text-align: center;
+}
+.apk-note {
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.apk-bar {
+  flex-shrink: 0;
+  padding: 8px 16px 7px;
+  background: var(--paper);
+  border-top: 1px solid rgba(239, 233, 220, 0.9);
+}
+.apk-note a,
+.apk-bar a {
+  color: var(--dusk);
+  font-size: 14px;
+  font-weight: 650;
+  text-decoration: none;
+}
+.apk-bar a { font-size: 13px; }
+.apk-note p,
+.apk-bar p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.apk-bar p {
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
 .boot {
   min-height: 100%;
   display: flex;
