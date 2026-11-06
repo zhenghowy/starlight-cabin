@@ -125,6 +125,8 @@ sh scripts/deploy-fly.sh
 
 只有登录页有「下载 Android APK」，注册页和进了营地之后都没有。文件由这个网站自己提供：
 
+带哈希的页面脚本和样式可以在手机里留很久；页面入口每次都向服务器确认，所以更新能生效。登录和营地数据不缓存。已安装的安卓壳不用重装，下次打开就会用上这套缓存。
+
 `/downloads/starlight-cabin-sideload-1.0.0.apk`
 
 这是 Android 8.0 及以上的侧载测试包，需要联网，不是应用商店的正式签名。打包方法和升级限制写在 [android/README.md](android/README.md)。
