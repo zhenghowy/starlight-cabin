@@ -89,7 +89,7 @@ export function AuthPage({ mode, onSubmit, onSwitch, error, busy }) {
         <button className="text-link" type="button" onClick={onSwitch}>
           {isRegister ? '已经有营地了？回去登录' : '还没有账号？种下一颗种子'}
         </button>
-        <ApkDownload />
+        {isRegister ? null : <ApkDownload />}
       </form>
     </div>
   )

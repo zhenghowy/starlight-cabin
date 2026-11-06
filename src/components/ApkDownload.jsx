@@ -1,8 +1,8 @@
 import { APK_NAME, APK_PATH } from '@shared/apk.js'
 
-export function ApkDownload({ placement = 'card' }) {
+export function ApkDownload() {
   return (
-    <aside className={placement === 'bar' ? 'apk-bar' : 'apk-note'}>
+    <aside className="apk-note">
       <a href={APK_PATH} download={APK_NAME}>
         下载 Android APK
       </a>

@@ -1,6 +1,6 @@
 # 星空下的林中小屋 · 安卓安装包
 
-这是给现有网页做的一层手机壳。应用名用的是站里的中文名字「星空下的林中小屋」。网站的登录页和营地里都有「下载 Android APK」，地址是 `/downloads/starlight-cabin-sideload-1.0.0.apk`。放在 `public/downloads/` 里的就是这一份测试包，构建后由 Express 以安装包类型送出。钥匙和口令不在这个公开目录里。
+这是给现有网页做的一层手机壳。应用名用的是站里的中文名字「星空下的林中小屋」。网站只有登录页有「下载 Android APK」，地址是 `/downloads/starlight-cabin-sideload-1.0.0.apk`。放在 `public/downloads/` 里的就是这一份测试包，构建后由 Express 以安装包类型送出。钥匙和口令不在这个公开目录里。
 
 打开后直接进入已经在跑的线上服务：
 
