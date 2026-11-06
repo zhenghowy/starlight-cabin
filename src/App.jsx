@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api } from './api.js'
+import { ApkDownload } from './components/ApkDownload.jsx'
 import { CabinContext } from './context.jsx'
 import { AuthPage } from './pages/AuthPage.jsx'
 import { BoardPage } from './pages/BoardPage.jsx'
@@ -238,6 +239,7 @@ export default function App() {
             </header>
           ) : null}
           <main className="frame-scroll">{body}</main>
+          {authed ? <ApkDownload placement="bar" /> : null}
           {authed ? (
             <nav className="tabbar" aria-label="营地导航">
               {TABS.map((tab) => (

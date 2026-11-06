@@ -123,8 +123,23 @@ sh scripts/deploy-fly.sh
 
 手机上的应用只是一层窗口，打开已经部署好的 [https://starlight-cabin-howy.fly.dev](https://starlight-cabin-howy.fly.dev)。登录、松果币、打卡和林间排行仍用这一套账号和服务器存档，不会把 Express 装进手机，也不会在手机里另起一份 JSON。
 
-打包方法、侧载测试签名、系统要求和联网限制写在 [android/README.md](android/README.md)。
+登录页和进了营地之后，都有「下载 Android APK」。文件由这个网站自己提供：
+
+`/downloads/starlight-cabin-sideload-1.0.0.apk`
+
+这是 Android 8.0 及以上的侧载测试包，需要联网，不是应用商店的正式签名。打包方法和升级限制写在 [android/README.md](android/README.md)。
 
 ```bash
 ANDROID_HOME=/path/to/android-sdk sh scripts/build-android-apk.sh
 ```
+
+网页要带上这个安装包时，先构建再启动。Fly 上更新的是现有应用 `starlight-cabin-howy`，保留原来的卷 `cabin_data`：
+
+```bash
+npm ci
+npm test
+npm run build
+fly deploy --app starlight-cabin-howy
+```
+
+不要用脚本的默认应用名另开一台空机器，那会和现在的账号数据分开。

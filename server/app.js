@@ -1,6 +1,7 @@
 import express from 'express'
 import fs from 'node:fs'
 import path from 'node:path'
+import { APK_NAME, APK_PATH } from '../shared/apk.js'
 import {
   addShopItem,
   addTask,
@@ -41,6 +42,7 @@ function cookieValue(sid, { secure, maxAge }) {
 export function createApp({
   dataDir = process.env.DATA_DIR || path.join(process.cwd(), 'data'),
   distDir = path.join(process.cwd(), 'dist'),
+  publicDir = path.join(process.cwd(), 'public'),
   cookieSecure = process.env.COOKIE_SECURE === '1',
   allowRegister = process.env.ALLOW_REGISTER !== '0',
   maxUsers = Number(process.env.MAX_USERS || 20)
@@ -388,12 +390,41 @@ export function createApp({
     }
   })
 
+  app.get(APK_PATH, (req, res, next) => {
+    const file = [path.join(distDir, 'downloads', APK_NAME), path.join(publicDir, 'downloads', APK_NAME)].find((item) =>
+      fs.existsSync(item)
+    )
+    if (!file) {
+      res.status(404).type('text/plain; charset=utf-8').send('安装包还没有放好')
+      return
+    }
+    res.sendFile(
+      file,
+      {
+        dotfiles: 'deny',
+        headers: {
+          'Content-Type': 'application/vnd.android.package-archive',
+          'Content-Disposition': `attachment; filename="${APK_NAME}"`,
+          'X-Content-Type-Options': 'nosniff',
+          'Cache-Control': 'no-cache'
+        }
+      },
+      (err) => {
+        if (err) next(err)
+      }
+    )
+  })
+
   if (fs.existsSync(distDir)) {
     app.use(
       express.static(distDir, {
         index: false,
         setHeaders(res, file) {
           if (file.endsWith('index.html')) res.setHeader('Cache-Control', 'no-cache')
+          if (file.endsWith('.apk')) {
+            res.setHeader('Content-Type', 'application/vnd.android.package-archive')
+            res.setHeader('X-Content-Type-Options', 'nosniff')
+          }
         }
       })
     )
