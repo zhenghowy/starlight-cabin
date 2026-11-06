@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">星空下的林中小屋</string>
+    <string name="loading">小屋正在点灯…</string>
+    <string name="error_offline_title">暂时走不进森林</string>
+    <string name="error_offline_body">这部手机需要能访问互联网，才会打开 https://starlight-cabin-howy.fly.dev 。账号、松果币和林间排行都在那里，应用里没有另一份存档。</string>
+    <string name="error_ssl_title">安全连接被拦住了</string>
+    <string name="error_ssl_body">证书没有通过系统校验，应用不会放行。请检查系统时间和网络后再试。</string>
+    <string name="retry">再试一次</string>
+</resources>

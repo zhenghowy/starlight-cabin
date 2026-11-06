@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.StarlightCabin" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/dusk</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="colorAccent">@color/moss</item>
+        <item name="android:textColor">@color/ink</item>
+        <item name="android:windowSplashScreenBackground">@color/dusk</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+    </style>
+</resources>

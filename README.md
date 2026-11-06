@@ -118,3 +118,13 @@ sh scripts/deploy-fly.sh
 脚本会创建应用、一块 1GB 的持久卷 `cabin_data`（挂到 `/app/data`），然后部署。至少保持 1 台机器运行，不会在空闲时睡掉。完成后打开脚本打印的 `https://<应用名>.fly.dev`，按上面的步骤注册第一个账号。
 
 卷必须先于部署存在，否则机器起不来。脚本里已经包含创建卷；如果卷已在，那一步会跳过。
+
+## 安卓安装包
+
+手机上的应用只是一层窗口，打开已经部署好的 [https://starlight-cabin-howy.fly.dev](https://starlight-cabin-howy.fly.dev)。登录、松果币、打卡和林间排行仍用这一套账号和服务器存档，不会把 Express 装进手机，也不会在手机里另起一份 JSON。
+
+打包方法、侧载测试签名、系统要求和联网限制写在 [android/README.md](android/README.md)。
+
+```bash
+ANDROID_HOME=/path/to/android-sdk sh scripts/build-android-apk.sh
+```
