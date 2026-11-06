@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api } from './api.js'
+import { loadSession } from './session.js'
 import { CabinContext } from './context.jsx'
 import { AuthPage } from './pages/AuthPage.jsx'
 import { BoardPage } from './pages/BoardPage.jsx'
@@ -49,11 +50,10 @@ export default function App() {
   }, [])
 
   const load = useCallback(async () => {
-    const me = await api('/api/me')
-    const state = await api('/api/state')
-    setUser(me.user)
-    setStore(state.store)
-    return state.store
+    const data = await loadSession(api)
+    setUser(data.user)
+    setStore(data.store)
+    return data.store
   }, [])
 
   useEffect(() => {

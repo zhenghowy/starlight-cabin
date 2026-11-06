@@ -420,10 +420,17 @@ export function createApp({
       express.static(distDir, {
         index: false,
         setHeaders(res, file) {
+          const normalized = file.split(path.sep).join('/')
+          if (normalized.includes('/assets/')) {
+            // 文件名带构建哈希。改内容会换地址，所以可以长期缓存；接口和页面入口不走这里。
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+            return
+          }
           if (file.endsWith('index.html')) res.setHeader('Cache-Control', 'no-cache')
           if (file.endsWith('.apk')) {
             res.setHeader('Content-Type', 'application/vnd.android.package-archive')
             res.setHeader('X-Content-Type-Options', 'nosniff')
+            res.setHeader('Cache-Control', 'no-cache')
           }
         }
       })
