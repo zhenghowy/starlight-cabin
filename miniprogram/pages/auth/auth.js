@@ -1,29 +1,37 @@
 const session = require('../../utils/session.js')
+const game = require('../../utils/game.js')
+
+function skyHeight() {
+  const info = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync()
+  const menu = wx.getMenuButtonBoundingClientRect()
+  return Math.max(info.statusBarHeight || 20, menu.bottom || 0)
+}
 
 Page({
-  onShow() {
-    if (session.getCabin().view().authed) wx.switchTab({ url: '/pages/home/home' })
-  },
   data: {
     register: false,
     username: '',
     password: '',
     confirm: '',
     error: '',
-    busy: false
+    busy: false,
+    sky: 48,
+    scene: null,
+    levelWord: ''
+  },
+  onLoad() {
+    const preview = game.presentHome(game.emptyStore())
+    this.setData({ sky: skyHeight(), scene: preview.scene, levelWord: preview.levelWord })
+  },
+  onShow() {
+    if (session.getCabin().view().authed) wx.switchTab({ url: '/pages/home/home' })
   },
   onSwitch() {
     this.setData({ register: !this.data.register, error: '' })
   },
-  onName(e) {
-    this.setData({ username: e.detail.value })
-  },
-  onPassword(e) {
-    this.setData({ password: e.detail.value })
-  },
-  onConfirm(e) {
-    this.setData({ confirm: e.detail.value })
-  },
+  onName(e) { this.setData({ username: e.detail.value }) },
+  onPassword(e) { this.setData({ password: e.detail.value }) },
+  onConfirm(e) { this.setData({ confirm: e.detail.value }) },
   async onSubmit() {
     const name = this.data.username.trim()
     if (name.length < 2) {

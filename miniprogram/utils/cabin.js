@@ -311,10 +311,12 @@ function createCabin({ storage, request, now = () => new Date(), online = async 
       greeting: home.greeting,
       levelWord: home.levelWord,
       attrs: home.attrs,
+      scene: home.scene,
       tasks: home.tasks.map((task) => ({
         id: task.id,
         name: task.name,
         type: task.type,
+        color: game.ATTR_META[task.type].color,
         done: task.is_completed,
         rewardLine: game.formatConeLine(task.reward_cones, task.minutes),
         negative: task.reward_cones < 0

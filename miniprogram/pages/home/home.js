@@ -1,7 +1,26 @@
 const session = require('../../utils/session.js')
 
+const TYPES = [
+  { type: 'study', label: '学识（学习）', icon: '📜' },
+  { type: 'fitness', label: '能量（健身）', icon: '🏃' },
+  { type: 'routine', label: '秩序（作息）', icon: '🌙' },
+  { type: 'saving', label: '储蓄（省钱）', icon: '🪙' }
+]
+
 Page({
-  data: { ready: false, syncing: false, adding: false, types: ['学识', '能量', '秩序', '储蓄'], typeIndex: 0, name: '', minutes: '', reward: '' },
+  data: {
+    ready: false,
+    syncing: false,
+    syncOpen: false,
+    typeOpen: false,
+    nameOpen: false,
+    typeOptions: TYPES,
+    draftType: 'study',
+    name: '',
+    minutes: '',
+    reward: '',
+    formError: ''
+  },
   onShow() {
     this.refresh()
     this._unsub = session.subscribe(() => this.refresh())
@@ -15,8 +34,23 @@ Page({
       wx.reLaunch({ url: '/pages/auth/auth' })
       return
     }
-    this.setData(Object.assign({ ready: true }, view))
+    const type = TYPES.find((item) => item.type === this.data.draftType) || TYPES[0]
+    this.setData(Object.assign({ ready: true, draftCopy: `${type.icon} ${type.label}` }, view))
   },
+  noop() {},
+  openSync() { this.setData({ syncOpen: true }) },
+  closeSync() { this.setData({ syncOpen: false }) },
+  openTypes() { this.setData({ typeOpen: true, formError: '' }) },
+  closeTypes() { this.setData({ typeOpen: false }) },
+  closeName() { this.setData({ nameOpen: false }) },
+  pickType(e) {
+    const draftType = e.currentTarget.dataset.type
+    this.setData({ draftType, typeOpen: false, nameOpen: true, name: '', minutes: '', reward: '', formError: '' })
+    this.refresh()
+  },
+  onName(e) { this.setData({ name: e.detail.value }) },
+  onMinutes(e) { this.setData({ minutes: e.detail.value }) },
+  onReward(e) { this.setData({ reward: e.detail.value }) },
   async onCheckIn(e) {
     try {
       const applied = session.getCabin().checkIn(e.currentTarget.dataset.id)
@@ -39,34 +73,22 @@ Page({
       }
     })
   },
-  toggleAdd() {
-    this.setData({ adding: !this.data.adding })
-  },
-  onType(e) {
-    this.setData({ typeIndex: Number(e.detail.value) })
-  },
-  onName(e) {
-    this.setData({ name: e.detail.value })
-  },
-  onMinutes(e) {
-    this.setData({ minutes: e.detail.value })
-  },
-  onReward(e) {
-    this.setData({ reward: e.detail.value })
-  },
   onAdd() {
-    const types = ['study', 'fitness', 'routine', 'saving']
+    if (!String(this.data.name || '').trim()) {
+      this.setData({ formError: '先给这件小事起个名字' })
+      return
+    }
     try {
       session.getCabin().addTask({
         name: this.data.name,
-        type: types[this.data.typeIndex],
+        type: this.data.draftType,
         minutes: this.data.minutes,
         reward: this.data.reward
       })
-      this.setData({ adding: false, name: '', minutes: '', reward: '' })
+      this.setData({ nameOpen: false, name: '', minutes: '', reward: '', formError: '' })
       this.refresh()
     } catch (err) {
-      wx.showToast({ title: err.message, icon: 'none' })
+      this.setData({ formError: err.message })
     }
   },
   async onSync() {

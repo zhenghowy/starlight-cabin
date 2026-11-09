@@ -1,20 +1,53 @@
+<cabin-nav title="林间杂货铺" pending="{{sync.pending}}" bind:sync="openSync" bind:leave="onLeave" />
 <view class="page" wx:if="{{ready}}">
-  <view class="card">
-    <view class="cones {{pineCones < 0 ? 'minus' : ''}}">{{pineCones}} 松果</view>
-    <view class="muted">心愿记在手机里。正数兑换时花掉，负数兑换时退回。这里不使用微信支付。</view>
-  </view>
-  <view class="card" wx:for="{{shopItems}}" wx:key="id">
-    <view class="row"><text>{{item.name}}</text><text class="{{item.cost < 0 ? 'minus' : ''}}">{{item.costLine}}</text></view>
-    <view class="row">
-      <button class="mini" data-id="{{item.id}}" bindtap="onRemove">移除</button>
-      <button class="mini check" data-id="{{item.id}}" data-name="{{item.name}}" disabled="{{!item.affordable}}" bindtap="onRedeem">兑换</button>
+  <view class="topbar">
+    <view class="cones">
+      <text class="cone-icon">🪙</text>
+      <text class="cone-num {{pineCones < 0 ? 'minus' : ''}}">{{pineCones}}</text>
+      <text class="cone-label">松果币</text>
     </view>
   </view>
-  <button class="btn" bindtap="toggleAdd">添加一个心愿</button>
-  <view class="card" wx:if="{{adding}}">
-    <input class="input" maxlength="40" placeholder="想奖励自己的事" value="{{name}}" bindinput="onName" />
-    <input class="input" placeholder="大约几分钟，可空" value="{{minutes}}" bindinput="onMinutes" />
-    <input class="input" placeholder="松果价格，负数表示退回" value="{{cost}}" bindinput="onCost" />
+  <view class="section-head"><text class="section-title">想换成的现实奖励</text></view>
+  <view class="item" wx:for="{{shopItems}}" wx:key="id">
+    <view class="item-main">
+      <view class="item-name">{{item.name}}</view>
+      <view class="item-cost {{item.cost < 0 ? 'minus' : ''}}">{{item.costLine}}</view>
+    </view>
+    <button class="mini-remove" data-id="{{item.id}}" bindtap="onRemove">×</button>
+    <button class="pill pill-amber" data-id="{{item.id}}" data-name="{{item.name}}" disabled="{{!item.affordable}}" bindtap="onRedeem">兑换</button>
+  </view>
+  <button class="add" bindtap="openAdd"><text>+</text><text>添加一个心愿</text></button>
+  <view class="footer-note">心愿不用多，够你惦记就好。正数是花掉的松果，负数兑换时退回。这里不使用微信支付。</view>
+</view>
+
+<view class="mask" wx:if="{{syncOpen}}" bindtap="closeSync">
+  <view class="modal" catchtap="noop">
+    <view class="modal-title">本机同步</view>
+    <view class="hint">上次成功：{{sync.lastSyncText}}</view>
+    <view class="hint">还没同步：{{sync.pending}} 条。</view>
+    <view class="form-error" wx:if="{{sync.lastError}}">{{sync.lastError}}</view>
+    <button class="btn" loading="{{syncing}}" disabled="{{syncing}}" bindtap="onSync">立即同步</button>
+    <button class="text-link" bindtap="closeSync">先这样</button>
+  </view>
+</view>
+
+<view class="mask" wx:if="{{adding}}" bindtap="closeAdd">
+  <view class="modal" catchtap="noop">
+    <view class="modal-title">添加一件心愿</view>
+    <view class="field">
+      <text class="field-label">想奖励自己的事</text>
+      <input class="input" maxlength="40" placeholder="例如：喝一杯热可可" value="{{name}}" bindinput="onName" />
+    </view>
+    <view class="field">
+      <text class="field-label">大约几分钟</text>
+      <input class="input" placeholder="可空" value="{{minutes}}" bindinput="onMinutes" />
+    </view>
+    <view class="field">
+      <text class="field-label">松果价格</text>
+      <input class="input" placeholder="正数花掉，负数退回" value="{{cost}}" bindinput="onCost" />
+    </view>
+    <view class="form-error" wx:if="{{formError}}">{{formError}}</view>
     <button class="btn" bindtap="onAdd">记下</button>
+    <button class="text-link" bindtap="closeAdd">再想想</button>
   </view>
 </view>

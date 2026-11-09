@@ -1,0 +1,8 @@
+<view class="spacer" style="height: {{total}}px;"></view>
+<view class="nav" style="height: {{total}}px; padding-top: {{status}}px; padding-right: {{padRight}}px;">
+  <view class="nav-inner" style="height: {{inner}}px;">
+    <text class="nav-sync" bindtap="onSync">{{pending ? '同步 ' + pending : '同步'}}</text>
+    <text class="nav-title">{{title}}</text>
+    <text class="nav-leave" bindtap="onLeave">离开</text>
+  </view>
+</view>

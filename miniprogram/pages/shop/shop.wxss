@@ -1,4 +1,1 @@
-.mini { margin: 12rpx 0 0; font-size: 26rpx; background: #efe7da; color: #2c2824; }
-.check { background: #3d6b52; color: #fffdf8; }
-.minus { color: #9a3d3d; }
-.input { margin-top: 16rpx; }
+.topbar { margin-bottom: 8rpx; }

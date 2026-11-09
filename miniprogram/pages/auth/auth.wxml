@@ -1,22 +1,23 @@
-<view class="page">
-  <view class="card">
-    <view class="kicker">修行时间</view>
-    <view class="title">{{register ? '种下一颗种子' : '回到你的营地'}}</view>
-    <view class="muted lead">第一次要联网，把线上的营地取回来。密码不会留在手机里。取回之后，断网也能记。清除小程序数据会丢掉还没同步的记录。</view>
-    <view class="field">
-      <text class="field-label">林间名字</text>
-      <input class="input" maxlength="16" placeholder="例如：林间" value="{{username}}" bindinput="onName" />
-    </view>
-    <view class="field">
-      <text class="field-label">密码</text>
-      <input class="input" password maxlength="64" placeholder="至少 6 位" value="{{password}}" bindinput="onPassword" />
-    </view>
-    <view class="field" wx:if="{{register}}">
-      <text class="field-label">再写一次密码</text>
-      <input class="input" password maxlength="64" placeholder="再确认一次" value="{{confirm}}" bindinput="onConfirm" />
-    </view>
-    <view class="error" wx:if="{{error}}">{{error}}</view>
-    <button class="btn" loading="{{busy}}" disabled="{{busy}}" bindtap="onSubmit">{{register ? '注册并进入' : '进入营地'}}</button>
-    <button class="btn btn-quiet" bindtap="onSwitch">{{register ? '已经有营地了？回去登录' : '还没有账号？种下一颗种子'}}</button>
+<view class="status-sky" style="height: {{sky}}px;"></view>
+<cabin-scene flush="{{true}}" scene="{{scene}}" level-word="{{levelWord}}" caption="{{false}}" />
+<view class="auth-card">
+  <view class="auth-kicker">星空下的林中小屋</view>
+  <view class="auth-title">{{register ? '种下一颗种子' : '回到你的营地'}}</view>
+  <view class="auth-lead">{{register ? '给自己取一个林间名字。这片森林很小，只留给你和几位朋友。' : '森林在安静地等你。登录之后，看见的是你自己的小屋。'}}</view>
+  <view class="hint">第一次要联网，把线上的营地取回来。密码不会留在手机里。取回之后，断网也能记。清除小程序数据会丢掉还没同步的记录。</view>
+  <view class="field">
+    <text class="field-label">林间名字</text>
+    <input class="input" maxlength="16" placeholder="例如：林间" value="{{username}}" bindinput="onName" />
   </view>
+  <view class="field">
+    <text class="field-label">密码</text>
+    <input class="input" password maxlength="64" placeholder="至少 6 位" value="{{password}}" bindinput="onPassword" />
+  </view>
+  <view class="field" wx:if="{{register}}">
+    <text class="field-label">再写一次密码</text>
+    <input class="input" password maxlength="64" placeholder="再确认一次" value="{{confirm}}" bindinput="onConfirm" />
+  </view>
+  <view class="form-error" wx:if="{{error}}">{{error}}</view>
+  <button class="btn" loading="{{busy}}" disabled="{{busy}}" bindtap="onSubmit">{{register ? '注册并进入' : '进入营地'}}</button>
+  <button class="text-link" bindtap="onSwitch">{{register ? '已经有营地了？回去登录' : '还没有账号？种下一颗种子'}}</button>
 </view>

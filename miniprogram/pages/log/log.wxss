@@ -1,12 +1,1 @@
-.poem { font-size: 32rpx; }
-.stats { display: flex; gap: 12rpx; }
-.stat { flex: 1; text-align: center; }
-.num { display: block; font-size: 40rpx; font-weight: 600; }
-.section { font-weight: 600; margin-bottom: 16rpx; }
-.heat { white-space: nowrap; }
-.weeks { display: flex; gap: 8rpx; }
-.week { display: flex; flex-direction: column; gap: 8rpx; }
-.label { height: 28rpx; font-size: 20rpx; color: #6d6458; }
-.cell { width: 22rpx; height: 22rpx; border-radius: 6rpx; background: #efe7da; }
-.cell.lit { background: #3d6b52; }
-.cell.future { opacity: 0.35; }
+.weeks { display: inline-flex; }

@@ -1,3 +1,1 @@
-.kicker { color: #3d6b52; letter-spacing: 4rpx; }
-.title { font-size: 48rpx; font-weight: 600; margin: 8rpx 0 16rpx; }
-.lead { margin-bottom: 28rpx; }
+.hint { margin-top: -8rpx; }

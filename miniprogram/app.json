@@ -8,22 +8,23 @@
     "pages/detail/detail"
   ],
   "window": {
+    "navigationStyle": "custom",
     "navigationBarTitleText": "修行时间",
-    "navigationBarBackgroundColor": "#24384a",
+    "navigationBarBackgroundColor": "#2e4a62",
     "navigationBarTextStyle": "white",
-    "backgroundColor": "#f4efe6",
+    "backgroundColor": "#f7f3e9",
     "backgroundTextStyle": "dark"
   },
   "tabBar": {
-    "color": "#6d6458",
-    "selectedColor": "#2f6f4e",
-    "backgroundColor": "#fffdf8",
+    "color": "#9aa5a0",
+    "selectedColor": "#6b8e6b",
+    "backgroundColor": "#fffdf7",
     "borderStyle": "white",
     "list": [
-      { "pagePath": "pages/home/home", "text": "营地" },
+      { "pagePath": "pages/home/home", "text": "我的营地" },
       { "pagePath": "pages/shop/shop", "text": "杂货铺" },
-      { "pagePath": "pages/log/log", "text": "年轮" },
-      { "pagePath": "pages/board/board", "text": "排行" }
+      { "pagePath": "pages/log/log", "text": "岁月年轮" },
+      { "pagePath": "pages/board/board", "text": "林间排行" }
     ]
   },
   "style": "v2",

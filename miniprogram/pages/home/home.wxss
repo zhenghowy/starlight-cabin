@@ -1,10 +1,1 @@
-.leave { width: auto; margin: 0; }
-.bar { height: 12rpx; background: #efe7da; border-radius: 999rpx; overflow: hidden; margin: 12rpx 0; }
-.fill { height: 100%; }
-.head { margin: 8rpx 0 16rpx; }
-.section { font-size: 34rpx; font-weight: 600; }
-.task-name { font-size: 32rpx; }
-.minus { color: #9a3d3d; }
-.mini { margin: 12rpx 0 0; font-size: 26rpx; background: #efe7da; color: #2c2824; }
-.check { background: #3d6b52; color: #fffdf8; }
-.input { margin-top: 16rpx; }
+/* 版式在 app.wxss，和网页同一套纸色与卡片。 */

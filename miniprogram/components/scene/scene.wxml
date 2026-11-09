@@ -1,0 +1,34 @@
+<view class="scene-wrap {{flush ? 'flush' : ''}}" wx:if="{{scene}}">
+  <view class="scene {{flush ? 'flush' : ''}}" style="font-size: {{em}}px;">
+    <view class="sky">
+      <view class="star" wx:for="{{stars}}" wx:key="left" style="left: {{item.left}}%; top: {{item.top}}%; opacity: {{starOpacity}};"></view>
+      <view class="moon"></view>
+    </view>
+    <view class="ground"></view>
+    <view class="hill hill-back"></view>
+    <view class="hill hill-front"></view>
+    <view class="cabin">
+      <view class="roof"></view>
+      <view class="wall">
+        <view class="window" style="opacity: {{light}};"></view>
+        <view class="door"></view>
+      </view>
+      <view class="chimney"></view>
+      <view class="smoke" style="opacity: {{light}};"></view>
+    </view>
+    <view class="tree" style="left: 56em; bottom: 120em;">
+      <view class="trunk" style="height: {{treeH}}em;"></view>
+      <view class="crown" style="width: {{foliage}}em; height: {{foliage}}em; bottom: {{crownBottom}}em;"></view>
+      <view class="crown crown-2" style="width: {{foliage2}}em; height: {{foliage2}}em; bottom: {{crown2Bottom}}em;"></view>
+    </view>
+    <view class="tree" style="right: 48em; bottom: 120em;">
+      <view class="trunk" style="height: {{smallH}}em;"></view>
+      <view class="crown" style="width: {{smallF}}em; height: {{smallF}}em; bottom: {{smallBottom}}em;"></view>
+    </view>
+    <view class="camp" style="width: {{campW}}em;"></view>
+    <view class="cones-pile">
+      <view class="pinecone" wx:for="{{cones}}" wx:key="left" style="left: {{item.left}}em; bottom: {{item.bottom}}em;"></view>
+    </view>
+    <view class="scene-caption" wx:if="{{caption}}">这里有一{{levelWord}}，正在慢慢长大</view>
+  </view>
+</view>

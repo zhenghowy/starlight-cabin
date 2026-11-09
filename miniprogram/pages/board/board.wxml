@@ -1,11 +1,20 @@
+<cabin-nav title="林间排行" pending="{{pending}}" bind:sync="openSync" bind:leave="onLeave" />
 <view class="page" wx:if="{{ready}}">
-  <view class="card muted" wx:if="{{hasBoard}}">这是 {{boardText}} 同步下来的排行，不是现在的实时排名。</view>
-  <view class="card muted" wx:else>还没有排行快照。有网时点营地里的「立即同步」。</view>
-  <view class="card row" wx:for="{{board}}" wx:key="id" data-id="{{item.id}}" bindtap="onOpen">
-    <view>
-      <view>{{item.rank}}. {{item.username}} <text wx:if="{{item.me}}">你</text></view>
-      <view class="muted">{{item.levelWord}} · {{item.pineCones}} 松果 · 连续 {{item.streak}} 天</view>
+  <view class="board-lead" wx:if="{{hasBoard}}">这是 {{boardText}} 同步下来的排行，不是现在的实时排名。</view>
+  <view class="board-lead" wx:else>还没有排行快照。有网时点左上角「同步」。</view>
+  <view class="rank-card {{item.me ? 'me' : ''}}" wx:for="{{board}}" wx:key="id" data-id="{{item.id}}" bindtap="onOpen">
+    <text class="rank-no">{{item.rank}}</text>
+    <view class="rank-main">
+      <view class="rank-top"><text class="rank-name">{{item.username}}<text class="rank-you" wx:if="{{item.me}}">你</text></text><text class="rank-level">{{item.levelWord}}</text></view>
+      <view class="rank-meta">{{item.pineCones}} 松果 · 连续 {{item.streak}} 天 · 今天 {{item.todayDone}}/{{item.todayTotal}}</view>
     </view>
-    <text class="muted">查看</text>
+  </view>
+</view>
+<view class="mask" wx:if="{{syncOpen}}" bindtap="closeSync">
+  <view class="modal" catchtap="noop">
+    <view class="modal-title">本机同步</view>
+    <view class="hint">上次成功：{{lastSyncText}}</view>
+    <button class="btn" bindtap="onSync">立即同步</button>
+    <button class="text-link" bindtap="closeSync">先这样</button>
   </view>
 </view>
