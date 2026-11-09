@@ -38,9 +38,12 @@ page {
   color: #8c8177;
 }
 
-.attrs { display: flex; flex-wrap: wrap; gap: 16rpx; margin-bottom: 32rpx; }
+.attrs { display: flex; flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: stretch; gap: 0; margin-bottom: 16rpx; }
 .attr {
-  width: calc(50% - 8rpx);
+  width: 48%;
+  flex: 0 0 48%;
+  min-width: 0;
+  margin-bottom: 16rpx;
   box-sizing: border-box;
   background: #fffdf8;
   border: 1px solid rgba(239, 233, 220, 0.95);
