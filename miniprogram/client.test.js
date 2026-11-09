@@ -60,6 +60,147 @@ async function startServer() {
   }
 }
 
+async function withoutIntl(fn) {
+  const descriptor = Object.getOwnPropertyDescriptor(global, 'Intl')
+  Object.defineProperty(global, 'Intl', { value: undefined, configurable: true, writable: true })
+  try {
+    assert.equal(typeof Intl, 'undefined')
+    await fn()
+  } finally {
+    if (descriptor) Object.defineProperty(global, 'Intl', descriptor)
+    else delete global.Intl
+  }
+}
+
+test('dates, import, log, board and sync work without Intl', async () => {
+  const game = require('./utils/game.js')
+  const { createCabin } = require('./utils/cabin.js')
+  await withoutIntl(async () => {
+    assert.equal(game.today(new Date('2026-11-02T16:30:00.000Z')), '2026-11-03')
+    assert.equal(game.today(new Date('2026-11-02T15:30:00.000Z')), '2026-11-02')
+    const store = game.emptyStore(new Date('2026-11-02T16:30:00.000Z'))
+    store.user_profile.pine_cones = -486
+    const home = game.presentHome(store, new Date('2026-11-02T16:30:00.000Z'))
+    assert.equal(home.pineCones, -486)
+    const log = game.presentLog(store, new Date('2026-11-02T16:30:00.000Z'))
+    assert.equal(typeof log.poem, 'string')
+    assert.equal(log.grid.length > 0, true)
+    const activity = game.presentActivity(store, new Date('2026-11-02T16:30:00.000Z'))
+    assert.equal(activity.pineCones, -486)
+    assert.equal(typeof game.compareActivity({ username: '小林', totalLevel: 1, streak: 0, pineCones: 0 }, { username: '小乙', totalLevel: 1, streak: 0, pineCones: 0 }), 'number')
+
+    const storage = memoryStorage()
+    storage.write({
+      activeId: 'u_old',
+      accounts: {
+        u_old: {
+          username: '小林',
+          store,
+          pending: [{ id: 'op_keep', type: 'checkin', taskId: 't1' }],
+          conflicts: [{ id: 'op_old', error: '还留着' }],
+          lastSyncAt: Date.now(),
+          lastError: '',
+          authExpired: false,
+          board: [],
+          boardAt: 0
+        }
+      },
+      secrets: { u_old: 'sid-keep' }
+    })
+    const kept = createCabin({
+      storage,
+      request: async () => {
+        throw Object.assign(new Error('不应该在未到期时联网'), { offline: false })
+      },
+      online: async () => true
+    })
+    assert.equal(kept.view().pineCones, -486)
+    assert.equal(kept.view().sync.pending, 1)
+    assert.equal(kept.view().sync.conflicts[0].error, '还留着')
+    assert.equal(kept.view().log.grid.length > 0, true)
+    const skipped = await kept.catchUp()
+    assert.equal(skipped.skipped, true)
+    assert.equal(storage.read().secrets.u_old, 'sid-keep')
+    assert.equal(storage.read().accounts.u_old.pending[0].id, 'op_keep')
+
+    const fresh = memoryStorage()
+    const imported = createCabin({
+      storage: fresh,
+      request: async ({ path }) => {
+        if (path === '/api/login') {
+          return {
+            status: 200,
+            sid: 'sid-new',
+            body: { user: { id: 'u_new', username: '小林' }, store }
+          }
+        }
+        if (path === '/api/sync') {
+          return { status: 200, sid: 'sid-new', body: { acked: [], conflicts: [], store, board: [{ id: 'u_new', username: '小林', rank: 1, pineCones: -486 }] } }
+        }
+        throw new Error(`意外请求 ${path}`)
+      },
+      online: async () => true
+    })
+    const view = await imported.signIn('小林', 'secret12', false)
+    assert.equal(view.pineCones, -486)
+    assert.equal(view.sync.pending, 0)
+    assert.equal(view.board[0].pineCones, -486)
+    assert.match(view.boardText, /^\d{4}-\d{2}-\d{2}/)
+    assert.equal(fresh.read().secrets.u_new, 'sid-new')
+  })
+})
+
+test('compatibility failures stay distinct from network failures', async () => {
+  const { createCabin } = require('./utils/cabin.js')
+  const storage = memoryStorage()
+  const broken = createCabin({
+    storage,
+    request: async () => {
+      throw new Error('Intl is not defined')
+    },
+    online: async () => true
+  })
+  await assert.rejects(() => broken.signIn('小林', 'secret12', false), (err) => {
+    assert.equal(err.message, 'Intl is not defined')
+    assert.equal(err.message.includes('连不上'), false)
+    return true
+  })
+  const offline = createCabin({
+    storage: memoryStorage(),
+    request: async () => {
+      const error = new Error('request:fail')
+      error.offline = true
+      throw error
+    },
+    online: async () => false
+  })
+  await assert.rejects(() => offline.signIn('小林', 'secret12', false), /森林暂时连不上/)
+
+  const saved = memoryStorage()
+  const cabin = createCabin({
+    storage: saved,
+    request: async ({ path }) => {
+      if (path === '/api/login') {
+        return {
+          status: 200,
+          sid: 'sid-keep',
+          body: { user: { id: 'u_keep', username: '小林' }, store: require('./utils/game.js').emptyStore() }
+        }
+      }
+      throw new TypeError('Intl is not defined')
+    },
+    online: async () => true
+  })
+  await cabin.signIn('小林', 'secret12', false)
+  cabin.debugSetLastSync(8)
+  const result = await cabin.sync(true)
+  assert.equal(result.ok, false)
+  assert.equal(result.error, 'Intl is not defined')
+  assert.equal(result.error.includes('连不上'), false)
+  assert.equal(cabin.view().authed, true)
+  assert.equal(saved.read().accounts.u_keep.pending.length, 0)
+})
+
 test('miniprogram project is the real app id and not a web-view', async () => {
   const root = __dirname
   const project = fs.readFileSync(path.join(root, 'project.config.json'), 'utf8')

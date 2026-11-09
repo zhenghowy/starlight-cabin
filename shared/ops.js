@@ -14,7 +14,9 @@ const CONFLICTS = {
 
 export function opId() {
   const bytes = new Uint8Array(16)
-  if (globalThis.crypto?.getRandomValues) globalThis.crypto.getRandomValues(bytes)
+  const root = typeof globalThis === 'undefined' ? {} : globalThis
+  const crypto = root.crypto
+  if (crypto && typeof crypto.getRandomValues === 'function') crypto.getRandomValues(bytes)
   else for (let i = 0; i < bytes.length; i += 1) bytes[i] = Math.floor(Math.random() * 256)
   return `op_${Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')}`
 }

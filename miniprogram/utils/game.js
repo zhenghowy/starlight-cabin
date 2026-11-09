@@ -69,7 +69,19 @@ function clone(o) {
   return JSON.parse(JSON.stringify(o))
 }
 
+function pad2(n) {
+  return String(n).padStart(2, '0')
+}
+
+/** 北京时间全年 UTC+8，没有夏令时。不使用 Intl，安卓微信里没有这个全局对象。 */
+function shanghaiDate(now) {
+  const shifted = new Date(now.getTime() + 8 * 60 * 60 * 1000)
+  return `${shifted.getUTCFullYear()}-${pad2(shifted.getUTCMonth() + 1)}-${pad2(shifted.getUTCDate())}`
+}
+
 function today(now = new Date(), timeZone = TIME_ZONE) {
+  if (timeZone === 'Asia/Shanghai') return shanghaiDate(now)
+  if (typeof Intl === 'undefined' || typeof Intl.DateTimeFormat !== 'function') return shanghaiDate(now)
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone,
     year: 'numeric',
@@ -240,7 +252,7 @@ function readSignedField(value) {
 /** 输入框里只留一个可选的负号和整数，并收到金币上下限内。 */
 function sanitizeSignedInput(raw) {
   const text = String(raw ?? '')
-  const negative = text.trimStart().startsWith('-')
+  const negative = text.replace(/^\s+/, '').startsWith('-')
   const digits = text.replace(/\D/g, '')
   if (!digits) return negative ? '-' : ''
   const n = Math.min(COIN_MAX, Number(digits))
@@ -544,12 +556,22 @@ function presentActivity(store, now = new Date()) {
   }
 }
 
+function compareName(left, right) {
+  const a = String(left || '')
+  const b = String(right || '')
+  try {
+    return a.localeCompare(b, 'zh')
+  } catch (err) {
+    return a < b ? -1 : a > b ? 1 : 0
+  }
+}
+
 function compareActivity(a, b) {
   return (
     b.totalLevel - a.totalLevel ||
     b.streak - a.streak ||
     b.pineCones - a.pineCones ||
-    String(a.username || '').localeCompare(String(b.username || ''), 'zh')
+    compareName(a.username, b.username)
   )
 }
 

@@ -123,8 +123,13 @@ function createCabin({ storage, request, now = () => new Date(), online = async 
         sid
       })
     } catch (err) {
-      rememberError('同步没有完成，记录还在手机里', false)
-      return { ok: false, error: '同步没有完成，记录还在手机里' }
+      if (err && err.offline) {
+        rememberError('同步没有完成，记录还在手机里', false)
+        return { ok: false, error: '同步没有完成，记录还在手机里' }
+      }
+      const message = (err && err.message) || '同步没有完成，记录还在手机里'
+      rememberError(message, false)
+      return { ok: false, error: message }
     }
     if (result.status === 401) {
       rememberError('登录过期了，本机记录还在', true)
@@ -177,6 +182,7 @@ function createCabin({ storage, request, now = () => new Date(), online = async 
         sid: ''
       })
     } catch (err) {
+      if (!err || !err.offline) throw err
       const error = new Error('森林暂时连不上。第一次登录需要网络。')
       error.status = 0
       throw error
