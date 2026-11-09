@@ -1,0 +1,31 @@
+<cabin-nav title="营地足迹" pending="{{pending}}" bind:sync="openSync" bind:leave="onLeave" />
+<view class="page" wx:if="{{ready}}">
+  <button class="back-link" bindtap="back">← 返回排行</button>
+  <view class="board-lead" wx:if="{{hasBoard}}">这是 {{boardText}} 同步下来的排行，不是现在的实时排名。</view>
+  <view class="poem-card" wx:if="{{missing}}">这片林子里没有这位朋友，或排行还没有同步。</view>
+  <block wx:else>
+    <view class="poem-card">
+      <view class="rank-name">{{entry.username}}<text class="rank-you" wx:if="{{entry.me}}">你</text></view>
+      <view class="rank-level">{{entry.levelWord}} · {{entry.pineCones}} 松果</view>
+      <view class="rank-meta">连续 {{entry.streak}} 天 · 累计 {{entry.totalDays}} 天 · 本月 {{entry.monthTotal}} 天</view>
+      <view class="rank-meta">今天 {{entry.todayDone}}/{{entry.todayTotal}}</view>
+    </view>
+    <view class="attr" wx:for="{{entry.attrs}}" wx:key="key">
+      <view class="attr-top"><text class="attr-name">{{item.icon}} {{item.name}}</text><text class="attr-lv">Lv.{{item.level}}</text></view>
+      <view class="attr-bar"><view class="attr-fill" style="width: {{item.percent}}%; background: {{item.color}};"></view></view>
+      <view class="attr-source">{{item.source}}</view>
+    </view>
+    <view class="poem-card" wx:if="{{entry.recentTasks.length}}">
+      <view class="section-title">上次同步时已完成</view>
+      <view class="task-name" wx:for="{{entry.recentTasks}}" wx:for-item="task" wx:key="name">{{task.icon}} {{task.name}}</view>
+    </view>
+  </block>
+</view>
+<view class="mask" wx:if="{{syncOpen}}" bindtap="closeSync">
+  <view class="modal" catchtap="noop">
+    <view class="modal-title">本机同步</view>
+    <view class="hint">这是排行快照页。同步仍在营地的同一份本机记录上进行。</view>
+    <button class="btn" bindtap="onSync">立即同步</button>
+    <button class="text-link" bindtap="closeSync">先这样</button>
+  </view>
+</view>

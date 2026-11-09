@@ -1,0 +1,6 @@
+{
+  "usingComponents": {
+    "cabin-nav": "/components/nav/nav",
+    "cabin-scene": "/components/scene/scene"
+  }
+}

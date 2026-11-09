@@ -1,0 +1,4 @@
+{
+  "desc": "私人修行记录，默认不参与索引",
+  "rules": [{ "action": "disallow", "page": "*" }]
+}

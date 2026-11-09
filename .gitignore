@@ -31,6 +31,7 @@ android/captures/
 !public/downloads/starlight-cabin-sideload-1.0.0.apk
 !public/downloads/starlight-cabin-sideload-1.1.0.apk
 android/app/src/main/assets/cabin/
+miniprogram/project.private.config.json
 *.aab
 *.idsig
 

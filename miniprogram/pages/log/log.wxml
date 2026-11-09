@@ -1,0 +1,34 @@
+<cabin-nav title="岁月年轮" pending="{{pending}}" bind:sync="openSync" bind:leave="onLeave" />
+<view class="page" wx:if="{{ready}}">
+  <view class="poem-card">
+    <text class="poem-icon">🌿</text>
+    <view class="poem">{{poem}}</view>
+  </view>
+  <view class="stats">
+    <view class="stat"><text class="stat-num">{{totalDays}}</text><text class="stat-label">累计天数</text></view>
+    <view class="stat"><text class="stat-num">{{streak}}</text><text class="stat-label">连续天数</text></view>
+    <view class="stat"><text class="stat-num">{{monthTotal}}</text><text class="stat-label">本月天数</text></view>
+  </view>
+  <view class="heat-card">
+    <view class="heat-title">打卡墙 · 近 12 周</view>
+    <scroll-view scroll-x>
+      <view class="weeks">
+        <view class="week" wx:for="{{grid}}" wx:for-index="weekIndex" wx:key="weekIndex">
+          <view class="month-label">{{item.label}}</view>
+          <view class="cell {{day.lit ? 'lit' : ''}} {{day.future ? 'future' : ''}}" wx:for="{{item.days}}" wx:for-item="day" wx:for-index="dayIndex" wx:key="dayIndex"></view>
+        </view>
+      </view>
+    </scroll-view>
+    <view class="legend"><text>少</text><view class="cell"></view><view class="cell lit"></view><text>多</text></view>
+  </view>
+  <view class="footer-note">空白的日子不是失败，只是森林在安静地陪你。</view>
+</view>
+<view class="mask" wx:if="{{syncOpen}}" bindtap="closeSync">
+  <view class="modal" catchtap="noop">
+    <view class="modal-title">本机同步</view>
+    <view class="hint">上次成功：{{lastSyncText}}</view>
+    <view class="hint">还没同步：{{pending}} 条。</view>
+    <button class="btn" bindtap="onSync">立即同步</button>
+    <button class="text-link" bindtap="closeSync">先这样</button>
+  </view>
+</view>

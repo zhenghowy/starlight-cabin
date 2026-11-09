@@ -1,0 +1,84 @@
+<cabin-nav title="我的营地" pending="{{sync.pending}}" bind:sync="openSync" bind:leave="onLeave" />
+<view class="page" wx:if="{{ready}}">
+  <view class="topbar">
+    <view class="cones">
+      <text class="cone-icon">🪙</text>
+      <text class="cone-num {{pineCones < 0 ? 'minus' : ''}}">{{pineCones}}</text>
+      <text class="cone-label">松果币</text>
+    </view>
+    <text class="greeting">{{greeting}}</text>
+  </view>
+  <cabin-scene scene="{{scene}}" level-word="{{levelWord}}" />
+  <view class="attrs">
+    <view class="attr" wx:for="{{attrs}}" wx:key="key">
+      <view class="attr-top"><text class="attr-name">{{item.icon}} {{item.name}}</text><text class="attr-lv">Lv.{{item.level}}</text></view>
+      <view class="attr-bar"><view class="attr-fill" style="width: {{item.percent}}%; background: {{item.color}};"></view></view>
+      <view class="attr-source">{{item.source}} · {{item.percent}}%</view>
+    </view>
+  </view>
+  <view class="section-head">
+    <text class="section-title">今日小事</text>
+    <text class="section-sub">{{doneCount}}/{{taskCount}} 已完成</text>
+  </view>
+  <view class="task {{item.done ? 'done' : ''}}" wx:for="{{tasks}}" wx:key="id">
+    <view class="task-left">
+      <view class="task-dot" style="background: {{item.color}};"></view>
+      <view class="task-main">
+        <text class="task-name">{{item.name}}</text>
+        <text class="task-reward {{item.negative ? 'minus' : ''}}">{{item.rewardLine}}</text>
+      </view>
+    </view>
+    <view class="row-actions">
+      <button class="mini-remove" data-id="{{item.id}}" data-name="{{item.name}}" bindtap="onRemove">×</button>
+      <button class="hit-check" wx:if="{{!item.done}}" data-id="{{item.id}}" bindtap="onCheckIn"><view class="pill-face">打卡</view></button>
+      <view class="done-mark" wx:else>已打卡</view>
+    </view>
+  </view>
+  <button class="add" bindtap="openTypes"><text class="add-plus">+</text><text>种下一件小事</text></button>
+  <view class="footer-note">没完成也没关系，森林只是静静等着你。</view>
+</view>
+
+<view class="mask" wx:if="{{syncOpen}}" bindtap="closeSync">
+  <view class="modal" catchtap="noop">
+    <view class="modal-title">本机同步</view>
+    <view class="hint">上次成功：{{sync.lastSyncText}}</view>
+    <view class="hint">还没同步：{{sync.pending}} 条。大约每 7 天打开且有网时同步。微信不能保证后台每周执行。</view>
+    <view class="form-error" wx:if="{{sync.authExpired}}">登录已过期。本机记录还在，重新登录后才能继续同步。</view>
+    <view class="form-error" wx:if="{{sync.lastError}}">{{sync.lastError}}</view>
+    <view class="form-error" wx:for="{{sync.conflicts}}" wx:key="id">{{item.error}}</view>
+    <button class="btn" loading="{{syncing}}" disabled="{{syncing}}" bindtap="onSync">立即同步</button>
+    <button class="btn btn-quiet" bindtap="onBackup">导出本机备份</button>
+    <view class="footer-note">卸载或清除数据会丢掉还没同步的记录。没有打开微信云备份。</view>
+    <button class="text-link" bindtap="closeSync">先这样</button>
+  </view>
+</view>
+
+<view class="mask" wx:if="{{typeOpen}}" bindtap="closeTypes">
+  <view class="modal" catchtap="noop">
+    <button class="sheet-item first" wx:for="{{typeOptions}}" wx:key="type" data-type="{{item.type}}" bindtap="pickType">{{item.icon}} {{item.label}}</button>
+    <button class="text-link" bindtap="closeTypes">取消</button>
+  </view>
+</view>
+
+<view class="mask" wx:if="{{nameOpen}}" bindtap="closeName">
+  <view class="modal" catchtap="noop">
+    <view class="modal-title">种下一件小事</view>
+    <view class="modal-copy">{{draftCopy}}</view>
+    <view class="field">
+      <text class="field-label">今天想做的小事</text>
+      <input class="input" maxlength="40" placeholder="例如：散步十分钟" value="{{name}}" bindinput="onName" />
+    </view>
+    <view class="field">
+      <text class="field-label">大约几分钟</text>
+      <input class="input" placeholder="例如 10" value="{{minutes}}" bindinput="onMinutes" />
+    </view>
+    <view class="field">
+      <text class="field-label">松果币</text>
+      <input class="input" placeholder="跟着分钟走，也能自己改" value="{{reward}}" bindinput="onReward" />
+    </view>
+    <view class="hint">1 分钟 = 1 枚松果。好事用正数，完成时加上；放纵用负数，完成时扣掉。</view>
+    <view class="form-error" wx:if="{{formError}}">{{formError}}</view>
+    <button class="btn" bindtap="onAdd">种下</button>
+    <button class="text-link" bindtap="closeName">再想想</button>
+  </view>
+</view>
