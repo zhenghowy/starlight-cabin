@@ -10,11 +10,13 @@
   <view class="section-head"><text class="section-title">想换成的现实奖励</text></view>
   <view class="item" wx:for="{{shopItems}}" wx:key="id">
     <view class="item-main">
-      <view class="item-name">{{item.name}}</view>
-      <view class="item-cost {{item.cost < 0 ? 'minus' : ''}}">{{item.costLine}}</view>
+      <text class="item-name">{{item.name}}</text>
+      <text class="item-cost {{item.cost < 0 ? 'minus' : ''}}">{{item.costLine}}</text>
     </view>
-    <button class="mini-remove" data-id="{{item.id}}" bindtap="onRemove">×</button>
-    <button class="pill pill-amber" data-id="{{item.id}}" data-name="{{item.name}}" disabled="{{!item.affordable}}" bindtap="onRedeem">兑换</button>
+    <view class="row-actions">
+      <button class="mini-remove" data-id="{{item.id}}" bindtap="onRemove">×</button>
+      <button class="pill pill-amber" data-id="{{item.id}}" data-name="{{item.name}}" disabled="{{!item.affordable}}" bindtap="onRedeem">兑换</button>
+    </view>
   </view>
   <button class="add" bindtap="openAdd"><text>+</text><text>添加一个心愿</text></button>
   <view class="footer-note">心愿不用多，够你惦记就好。正数是花掉的松果，负数兑换时退回。这里不使用微信支付。</view>

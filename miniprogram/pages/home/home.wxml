@@ -24,13 +24,15 @@
     <view class="task-left">
       <view class="task-dot" style="background: {{item.color}};"></view>
       <view class="task-main">
-        <view class="task-name">{{item.name}}</view>
-        <view class="task-reward {{item.negative ? 'minus' : ''}}">{{item.rewardLine}}</view>
+        <text class="task-name">{{item.name}}</text>
+        <text class="task-reward {{item.negative ? 'minus' : ''}}">{{item.rewardLine}}</text>
       </view>
     </view>
-    <button class="mini-remove" data-id="{{item.id}}" data-name="{{item.name}}" bindtap="onRemove">×</button>
-    <button class="pill pill-moss" wx:if="{{!item.done}}" data-id="{{item.id}}" bindtap="onCheckIn">打卡</button>
-    <view class="pill pill-done" wx:else>已打卡</view>
+    <view class="row-actions">
+      <button class="mini-remove" data-id="{{item.id}}" data-name="{{item.name}}" bindtap="onRemove">×</button>
+      <button class="pill pill-moss" wx:if="{{!item.done}}" data-id="{{item.id}}" bindtap="onCheckIn">打卡</button>
+      <view class="pill pill-done" wx:else>已打卡</view>
+    </view>
   </view>
   <button class="add" bindtap="openTypes"><text class="add-plus">+</text><text>种下一件小事</text></button>
   <view class="footer-note">没完成也没关系，森林只是静静等着你。</view>
