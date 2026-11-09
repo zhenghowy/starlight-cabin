@@ -4,6 +4,7 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   plugins: [react()],
+  publicDir: process.env.CABIN_PUBLIC || 'public',
   resolve: {
     alias: {
       '@shared': fileURLToPath(new URL('./shared', import.meta.url))

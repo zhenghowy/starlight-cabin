@@ -6,7 +6,9 @@ import path from 'node:path'
 import test from 'node:test'
 import { once } from 'node:events'
 import { createApp } from './app.js'
-import { APK_NAME, APK_PATH, APK_SHA256 } from '../shared/apk.js'
+import { APK_NAME, APK_PATH } from '../shared/apk.js'
+
+const APK_SHA256 = 'f104b8201ae5b5a270aedc0c5702b02aa577bbdc222c82726274409c5d1cbc3d'
 
 async function start() {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cabin-apk-'))
@@ -55,7 +57,18 @@ test('apk route downloads the sideload package and hides the signing key', async
     assert.match(res.headers.get('content-disposition') || '', new RegExp(`filename="${APK_NAME.replaceAll('.', '\\.')}"`))
     assert.equal(res.headers.get('x-content-type-options'), 'nosniff')
     assert.equal(createHash('sha256').update(buf).digest('hex'), APK_SHA256)
-    assert.equal(buf.length, 591456)
+    assert.equal(buf.length, fs.statSync(path.join(process.cwd(), 'public', 'downloads', APK_NAME)).size)
+
+    const previous = await fetch(ctx.base + '/downloads/starlight-cabin-sideload-1.0.0.apk')
+    const previousBuf = Buffer.from(await previous.arrayBuffer())
+    assert.equal(previous.status, 200)
+    assert.equal(previous.headers.get('content-type'), 'application/vnd.android.package-archive')
+    assert.match(previous.headers.get('content-disposition') || '', /filename="starlight-cabin-sideload-1\.0\.0\.apk"/)
+    assert.equal(previousBuf.length, 591456)
+    assert.equal(
+      createHash('sha256').update(previousBuf).digest('hex'),
+      '2a60fb5fea8b3be7d2a715fd233dab7377333b9ca6b1fc4acf2fb8915323fc8b'
+    )
 
     const head = await fetch(ctx.base + APK_PATH, { method: 'HEAD' })
     assert.equal(head.status, 200)

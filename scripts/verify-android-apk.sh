@@ -56,8 +56,8 @@ def need(text, needle, label):
         raise SystemExit(f"缺少{label}：{needle}")
 
 need(badging, "package: name='io.github.zhenghowy.starlightcabin'", "包名")
-need(badging, "versionCode='1'", "versionCode")
-need(badging, "versionName='1.0.0'", "versionName")
+need(badging, "versionCode='2'", "versionCode")
+need(badging, "versionName='1.1.0'", "versionName")
 need(badging, "sdkVersion:'26'", "最低系统")
 need(badging, "targetSdkVersion:'35'", "目标系统")
 need(badging, "application-label:'星空下的林中小屋'", "应用名")
@@ -75,7 +75,13 @@ permissions = [
     line for line in badging.splitlines()
     if "uses-permission" in line and "uses-implied-permission" not in line
 ]
-expected = ["uses-permission: name='android.permission.INTERNET'"]
+expected = [
+    "uses-permission: name='android.permission.INTERNET'",
+    "uses-permission: name='android.permission.ACCESS_NETWORK_STATE'",
+    "uses-permission: name='android.permission.WAKE_LOCK'",
+    "uses-permission: name='android.permission.RECEIVE_BOOT_COMPLETED'",
+    "uses-permission: name='android.permission.FOREGROUND_SERVICE'",
+]
 if permissions != expected:
     raise SystemExit("权限不只 INTERNET：\n" + "\n".join(permissions))
 

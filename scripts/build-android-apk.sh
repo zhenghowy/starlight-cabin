@@ -18,6 +18,12 @@ fi
 
 printf 'sdk.dir=%s\n' "$ANDROID_HOME" > local.properties
 chmod +x ./gradlew
+cd "$ROOT"
+rm -rf /tmp/cabin-android-public
+mkdir -p /tmp/cabin-android-public
+cp public/favicon.svg /tmp/cabin-android-public/
+CABIN_PUBLIC=/tmp/cabin-android-public npx vite build --base=/cabin/ --outDir=android/app/src/main/assets/cabin --emptyOutDir
+cd "$ROOT/android"
 ./gradlew --no-daemon :app:test :app:assembleRelease
 
 APK="$ROOT/android/app/build/outputs/apk/release/app-release.apk"

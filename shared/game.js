@@ -57,6 +57,14 @@ function nextId(prefix, now) {
   return `${prefix}${now.getTime().toString(36)}${idSeq.toString(36)}`
 }
 
+export function isStableId(value) {
+  return typeof value === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(value)
+}
+
+function stableId(fixedId, prefix, now) {
+  return isStableId(fixedId) ? fixedId : nextId(prefix, now)
+}
+
 function clone(o) {
   return JSON.parse(JSON.stringify(o))
 }
@@ -149,6 +157,10 @@ export function normalize(input, now = new Date()) {
       return next
     })
   if (typeof s.last_open_date !== 'string') s.last_open_date = today(now)
+  if (Array.isArray(input.sync_ops)) {
+    const ops = input.sync_ops.filter((id) => typeof id === 'string' && id.length > 0 && id.length <= 80).slice(-2000)
+    if (ops.length) s.sync_ops = ops
+  }
   return s
 }
 
@@ -311,14 +323,14 @@ export function redeem(store, itemId) {
   return { ok: true, store: s, item: { ...item } }
 }
 
-export function addShopItem(store, name, cost, now = new Date(), minutes) {
+export function addShopItem(store, name, cost, now = new Date(), minutes, fixedId) {
   const s = normalize(store, now)
   const trimmed = String(name || '').trim()
   if (!trimmed) return { ok: false, reason: 'name' }
   if (trimmed.length > 40) return { ok: false, reason: 'long' }
   const parsedMinutes = clampMinutes(minutes)
   const item = {
-    id: nextId('s', now),
+    id: stableId(fixedId, 's', now),
     name: trimmed,
     cost: resolveCost(cost, parsedMinutes)
   }
@@ -333,7 +345,7 @@ export function removeShopItem(store, id) {
   return s
 }
 
-export function addTask(store, name, type, reward, now = new Date(), minutes) {
+export function addTask(store, name, type, reward, now = new Date(), minutes, fixedId) {
   const s = normalize(store, now)
   const trimmed = String(name || '').trim()
   if (!ATTR_META[type]) return { ok: false, reason: 'type' }
@@ -341,7 +353,7 @@ export function addTask(store, name, type, reward, now = new Date(), minutes) {
   if (trimmed.length > 40) return { ok: false, reason: 'long' }
   const parsedMinutes = clampMinutes(minutes)
   const task = {
-    id: nextId('t', now),
+    id: stableId(fixedId, 't', now),
     name: trimmed,
     type,
     reward_cones: resolveReward(reward, parsedMinutes),

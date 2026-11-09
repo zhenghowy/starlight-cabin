@@ -1,7 +1,7 @@
 import express from 'express'
 import fs from 'node:fs'
 import path from 'node:path'
-import { APK_NAME, APK_PATH } from '../shared/apk.js'
+import { APK_NAME } from '../shared/apk.js'
 import {
   addShopItem,
   addTask,
@@ -16,6 +16,7 @@ import {
 } from '../shared/game.js'
 import { hashPassword, verifyPassword } from './password.js'
 import { createRepository } from './repository.js'
+import { createSyncBook } from './syncBook.js'
 
 const USERNAME_RE = /^[\p{Script=Han}a-zA-Z0-9_]{2,16}$/u
 const SESSION_SECONDS = 30 * 24 * 60 * 60
@@ -53,6 +54,7 @@ export function createApp({
   const repo = createRepository(dataDir, {
     maxUsers: Number.isFinite(maxUsers) && maxUsers > 0 ? maxUsers : 20
   })
+  const syncBook = createSyncBook(repo)
   const app = express()
   app.disable('x-powered-by')
   app.set('trust proxy', 1)
@@ -216,6 +218,33 @@ export function createApp({
     res.json({ user: req.user })
   })
 
+  async function rankedBoard(meId, includeScene = false) {
+    const users = await repo.listUsers()
+    const entries = []
+    for (const user of users) {
+      const store = await repo.readSave(user.id)
+      const entry = activityEntry(user, store, meId)
+      if (!includeScene) delete entry.scene
+      entries.push(entry)
+    }
+    entries.sort(compareActivity)
+    entries.forEach((entry, index) => {
+      entry.rank = index + 1
+    })
+    return entries
+  }
+
+  app.post('/api/sync', requireUser, async (req, res, next) => {
+    try {
+      const ops = Array.isArray(req.body?.ops) ? req.body.ops.slice(0, 40) : []
+      const result = await syncBook.push(req.user.id, ops)
+      const board = await rankedBoard(req.user.id, true)
+      res.json({ ...result, board, serverTime: Date.now() })
+    } catch (err) {
+      next(err)
+    }
+  })
+
   function activityEntry(user, store, meId) {
     return {
       id: user.id,
@@ -227,18 +256,7 @@ export function createApp({
 
   app.get('/api/board', requireUser, async (req, res, next) => {
     try {
-      const users = await repo.listUsers()
-      const entries = []
-      for (const user of users) {
-        const store = await repo.readSave(user.id)
-        const entry = activityEntry(user, store, req.user.id)
-        delete entry.scene
-        entries.push(entry)
-      }
-      entries.sort(compareActivity)
-      entries.forEach((entry, index) => {
-        entry.rank = index + 1
-      })
+      const entries = await rankedBoard(req.user.id)
       res.json({ entries })
     } catch (err) {
       next(err)
@@ -393,8 +411,14 @@ export function createApp({
     }
   })
 
-  app.get(APK_PATH, (req, res, next) => {
-    const file = [path.join(distDir, 'downloads', APK_NAME), path.join(publicDir, 'downloads', APK_NAME)].find((item) =>
+  const apkNames = new Set([APK_NAME, 'starlight-cabin-sideload-1.0.0.apk'])
+  app.get('/downloads/:file', (req, res, next) => {
+    const name = req.params.file
+    if (!apkNames.has(name)) {
+      next()
+      return
+    }
+    const file = [path.join(distDir, 'downloads', name), path.join(publicDir, 'downloads', name)].find((item) =>
       fs.existsSync(item)
     )
     if (!file) {
@@ -407,7 +431,7 @@ export function createApp({
         dotfiles: 'deny',
         headers: {
           'Content-Type': 'application/vnd.android.package-archive',
-          'Content-Disposition': `attachment; filename="${APK_NAME}"`,
+          'Content-Disposition': `attachment; filename="${name}"`,
           'X-Content-Type-Options': 'nosniff',
           'Cache-Control': 'no-cache'
         }

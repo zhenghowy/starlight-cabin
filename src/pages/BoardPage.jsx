@@ -12,6 +12,7 @@ export function BoardPage({ userId = '' }) {
   const { request, navigate } = useCabin()
   const [entries, setEntries] = useState(null)
   const [entry, setEntry] = useState(null)
+  const [syncedAt, setSyncedAt] = useState(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
 
@@ -25,6 +26,7 @@ export function BoardPage({ userId = '' }) {
         if (!alive) return
         if (userId) setEntry(data.entry)
         else setEntries(data.entries)
+        setSyncedAt(typeof data.syncedAt === 'number' ? data.syncedAt : null)
       })
       .catch((err) => {
         if (!alive || err.status === 401) return
@@ -58,12 +60,18 @@ export function BoardPage({ userId = '' }) {
     )
   }
 
+  const stamp = typeof syncedAt === 'number' ? new Date(syncedAt).toLocaleString('zh-CN', { hour12: false }) : ''
+  const staleNote = stamp ? (
+    <p className="footer-note">这是 {stamp} 同步下来的排行，不是现在的实时排名。</p>
+  ) : null
+
   if (userId && entry) {
     return (
       <div className="page">
         <button type="button" className="back-link" onClick={() => navigate('/board')}>
           ← 返回排行
         </button>
+        {staleNote}
         <header className="shop-header">
           <h2 className="section-title">
             {entry.username}
@@ -149,6 +157,7 @@ export function BoardPage({ userId = '' }) {
   return (
     <div className="page">
       <p className="board-lead">这里能看见朋友们的营地长成什么样。只展示等级、松果和打卡，心愿和密码都留在各自的小屋里。</p>
+      {staleNote}
       <div className="rank-list">
         {(entries || []).map((item) => (
           <button
