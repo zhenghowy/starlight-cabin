@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api } from './api.js'
+import { isCabinApp, loadNative, nativeLogin, nativeLogout, nativeMutate, nativeSync } from './nativeCabin.js'
+import { historyPath, normalizePath } from './paths.js'
 import { loadSession } from './session.js'
 import { CabinContext } from './context.jsx'
+import { SyncButton } from './components/SyncButton.jsx'
 import { AuthPage } from './pages/AuthPage.jsx'
 import { BoardPage } from './pages/BoardPage.jsx'
 import { HomePage } from './pages/HomePage.jsx'
@@ -15,11 +18,6 @@ const TABS = [
   { path: '/board', label: '林间排行' }
 ]
 
-function normalizePath(path) {
-  if (path === '/shop' || path === '/log' || path === '/board' || path === '/login' || path === '/register') return path
-  if (/^\/board\/u_[a-f0-9]+$/.test(path)) return path
-  return '/'
-}
 
 function screenFor(path, { authed, booting, bootError }) {
   if (booting || (bootError && !authed)) return path
@@ -39,7 +37,8 @@ export default function App() {
 
   const navigate = useCallback((to) => {
     const next = normalizePath(to)
-    if (window.location.pathname !== next) window.history.pushState({}, '', next)
+    const href = historyPath(next, isCabinApp())
+    if (window.location.pathname !== href) window.history.pushState({}, '', href)
     setPath(next)
   }, [])
 
@@ -50,7 +49,7 @@ export default function App() {
   }, [])
 
   const load = useCallback(async () => {
-    const data = await loadSession(api)
+    const data = isCabinApp() ? loadNative() : await loadSession(api)
     setUser(data.user)
     setStore(data.store)
     return data.store
@@ -80,9 +79,8 @@ export default function App() {
   const screen = screenFor(path, { authed, booting, bootError })
 
   useEffect(() => {
-    if (window.location.pathname !== screen) {
-      window.history.replaceState({}, '', screen)
-    }
+    const href = historyPath(screen, isCabinApp())
+    if (window.location.pathname !== href) window.history.replaceState({}, '', href)
   }, [screen])
 
   useEffect(() => {
@@ -108,6 +106,7 @@ export default function App() {
   const request = useCallback(
     async (url, options) => {
       try {
+        if (isCabinApp()) return nativeMutate(url, options, store)
         return await api(url, options)
       } catch (err) {
         if (err.status === 401) {
@@ -118,17 +117,19 @@ export default function App() {
         throw err
       }
     },
-    [navigate]
+    [navigate, store]
   )
 
   async function submitAuth(body) {
     setAuthBusy(true)
     setAuthError('')
     try {
-      const data = await api(screen === '/register' ? '/api/register' : '/api/login', {
-        method: 'POST',
-        body
-      })
+      const data = isCabinApp()
+        ? nativeLogin(body.username, body.password, screen === '/register' ? 'register' : 'login')
+        : await api(screen === '/register' ? '/api/register' : '/api/login', {
+            method: 'POST',
+            body
+          })
       setUser(data.user)
       setStore(data.store)
       navigate('/')
@@ -141,7 +142,8 @@ export default function App() {
 
   async function logout() {
     try {
-      await api('/api/logout', { method: 'POST' })
+      if (isCabinApp()) nativeLogout()
+      else await api('/api/logout', { method: 'POST' })
     } catch {
       // 网络抖一下也先把本地的门带上
     }
@@ -231,6 +233,7 @@ export default function App() {
         <div className="app-frame">
           {authed ? (
             <header className="nav">
+              {isCabinApp() ? <SyncButton onSynced={(data) => { setUser(data.user); setStore(data.store) }} /> : null}
               <h1>{title}</h1>
               <button type="button" className="nav-leave" onClick={logout} title={`${user.username} 的营地`}>
                 离开

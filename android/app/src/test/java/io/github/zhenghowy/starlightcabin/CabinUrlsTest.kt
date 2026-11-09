@@ -73,6 +73,17 @@ class CabinUrlsTest {
     }
 
     @Test
+    fun bundledShellStaysInsideTheApp() {
+        assertTrue(CabinUrls.isShellUrl("https://appassets.androidplatform.net/cabin/index.html"))
+        assertTrue(CabinUrls.isShellUrl("https://appassets.androidplatform.net/cabin/shop"))
+        assertTrue(CabinUrls.isShellUrl("https://appassets.androidplatform.net/"))
+        assertFalse(CabinUrls.isExternalWebUrl("https://appassets.androidplatform.net/cabin/shop"))
+        assertFalse(CabinUrls.isShellUrl("http://appassets.androidplatform.net/cabin/"))
+        assertFalse(CabinUrls.isShellUrl("https://user:pass@appassets.androidplatform.net/cabin/"))
+        assertFalse(CabinUrls.isShellUrl("https://evil.com/cabin/index.html"))
+    }
+
+    @Test
     fun backGoesThroughPagesThenLeaves() {
         assertEquals(CabinUrls.BackAction.GO_BACK_IN_PAGE, CabinUrls.decideBack(true))
         assertEquals(CabinUrls.BackAction.LEAVE_APP, CabinUrls.decideBack(false))
@@ -90,7 +101,13 @@ class CabinUrlsTest {
                     ?: error("uses-permission 没有名字：$tag")
             }
             .toList()
-        assertEquals(listOf("android.permission.INTERNET"), permissions)
+        assertEquals(
+            listOf(
+                "android.permission.INTERNET",
+                "android.permission.ACCESS_NETWORK_STATE"
+            ),
+            permissions
+        )
         assertTrue(manifest.contains("""android:usesCleartextTraffic="false""""))
         assertFalse(manifest.contains("""android:usesCleartextTraffic="true""""))
         assertTrue(manifest.contains("""android:allowBackup="false""""))
@@ -111,8 +128,11 @@ class CabinUrlsTest {
         assertFalse(source.contains(".proceed("))
         assertTrue(source.contains("handler.cancel()"))
         assertFalse(source.contains("setWebContentsDebuggingEnabled(true)"))
-        assertTrue(source.contains("setWebContentsDebuggingEnabled(false)"))
-        assertFalse(source.contains("addJavascriptInterface"))
+        assertTrue(source.contains("setWebContentsDebuggingEnabled(BuildConfig.DEBUG)"))
+        assertTrue(source.contains("\"CabinNative\""))
+        val bridge = readProjectFile("src/main/java/io/github/zhenghowy/starlightcabin/CabinSync.kt")
+        assertFalse(bridge.contains("fun eval"))
+        assertFalse(bridge.contains("loadUrl"))
     }
 
     private fun readProjectFile(path: String): String {

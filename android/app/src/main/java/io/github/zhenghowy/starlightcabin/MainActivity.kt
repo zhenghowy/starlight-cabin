@@ -25,6 +25,8 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.webkit.WebViewAssetLoader
+import kotlin.concurrent.thread
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
@@ -57,7 +59,12 @@ class MainActivity : AppCompatActivity() {
 
     private var failure: Failure? = null
     private var webViewDead = false
-    private var lastUrl = CabinUrls.START_URL
+    private var lastUrl = CabinUrls.SHELL_URL
+    private val assetLoader by lazy {
+        WebViewAssetLoader.Builder()
+            .addPathHandler("/", WebViewAssetLoader.AssetsPathHandler(this))
+            .build()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,7 +78,7 @@ class MainActivity : AppCompatActivity() {
             window.isStatusBarContrastEnforced = false
             window.isNavigationBarContrastEnforced = false
         }
-        WebView.setWebContentsDebuggingEnabled(false)
+        WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
 
         val cookies = CookieManager.getInstance()
         cookies.setAcceptCookie(true)
@@ -114,12 +121,20 @@ class MainActivity : AppCompatActivity() {
         val webPackage = WebView.getCurrentWebViewPackage()
         Log.i(TAG, "webview=${webPackage?.packageName}/${webPackage?.versionName}")
 
-        if (savedInstanceState != null) {
-            lastUrl = savedInstanceState.getString(STATE_URL) ?: CabinUrls.START_URL
-            val restored = webView.restoreState(savedInstanceState)
-            if (restored == null) loadCabin(lastUrl)
-        } else {
-            loadCabin(CabinUrls.START_URL)
+        progress.visibility = View.VISIBLE
+        thread(name = "cabin-import") {
+            val app = application as CabinApp
+            app.sync.importLegacyCookieIfNeeded()
+            app.sync.catchUpIfDue()
+            handler.post {
+                if (savedInstanceState != null) {
+                    lastUrl = savedInstanceState.getString(STATE_URL) ?: CabinUrls.SHELL_URL
+                    val restored = webView.restoreState(savedInstanceState)
+                    if (restored == null) loadCabin(lastUrl)
+                } else {
+                    loadCabin(CabinUrls.SHELL_URL)
+                }
+            }
         }
     }
 
@@ -165,7 +180,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadCabin(url: String) {
-        if (!CabinUrls.isInAppUrl(url)) return
+        if (!CabinUrls.isShellUrl(url)) return
         if (webViewDead) {
             webView = createWebView()
             content.addView(webView, 0, matchParent())
@@ -246,21 +261,36 @@ class MainActivity : AppCompatActivity() {
             setDownloadListener { _, _, _, _, _ ->
                 Log.i(TAG, "state=download-ignored")
             }
+            addJavascriptInterface(
+                CabinBridge(this@MainActivity, (this@MainActivity.application as CabinApp).sync, (this@MainActivity.application as CabinApp).store),
+                "CabinNative"
+            )
         }
     }
 
     private fun cabinClient(): WebViewClient {
         return object : WebViewClient() {
+            override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+                val url = request.url ?: return null
+                if (url.host != CabinUrls.SHELL_HOST) return null
+                val hit = assetLoader.shouldInterceptRequest(url)
+                if (hit?.data != null) return hit
+                if (request.method == "GET" && request.isForMainFrame) {
+                    return assetLoader.shouldInterceptRequest(Uri.parse(CabinUrls.SHELL_URL))
+                }
+                return hit
+            }
+
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 if (!request.isForMainFrame) return false
                 val url = request.url?.toString() ?: return true
-                if (CabinUrls.isInAppUrl(url)) return false
+                if (CabinUrls.isShellUrl(url)) return false
                 if (CabinUrls.isExternalWebUrl(url)) openExternal(url)
                 return true
             }
 
             override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) {
-                if (!CabinUrls.isInAppUrl(url)) return
+                if (!CabinUrls.isShellUrl(url)) return
                 failure = null
                 errorPanel.visibility = View.GONE
                 progress.visibility = View.VISIBLE
@@ -268,7 +298,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onPageFinished(view: WebView, url: String) {
-                if (failure != null || !CabinUrls.isInAppUrl(url)) return
+                if (failure != null || !CabinUrls.isShellUrl(url)) return
                 progress.visibility = View.GONE
                 handler.removeCallbacks(loadTimeout)
                 CookieManager.getInstance().flush()
@@ -288,7 +318,7 @@ class MainActivity : AppCompatActivity() {
                 description: String?,
                 failingUrl: String?
             ) {
-                if (CabinUrls.isInAppUrl(failingUrl)) showFailure(Failure.OFFLINE)
+                if (CabinUrls.isShellUrl(failingUrl)) showFailure(Failure.OFFLINE)
             }
 
             override fun onReceivedHttpError(

@@ -18,8 +18,12 @@ android {
         minSdk = 26
         targetSdk = 35
         // 覆盖安装时 versionCode 必须比手机里已装的那一版更大，并且仍用同一把侧载钥匙。
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     signingConfigs {
@@ -35,7 +39,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "CABIN_ORIGIN", "\"http://10.0.2.2:43127\"")
+        }
         release {
+            buildConfigField("String", "CABIN_ORIGIN", "\"https://starlight-cabin-howy.fly.dev\"")
             isMinifyEnabled = true
             isShrinkResources = true
             signingConfig = signingConfigs.getByName("sideload")
@@ -70,5 +78,8 @@ configurations.configureEach {
 dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.core:core-ktx:1.15.0")
+    implementation("androidx.webkit:webkit:1.12.1")
+    implementation("androidx.security:security-crypto:1.0.0")
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
     testImplementation("junit:junit:4.13.2")
 }

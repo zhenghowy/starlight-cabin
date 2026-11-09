@@ -10,6 +10,8 @@ object CabinUrls {
     const val HOST = "starlight-cabin-howy.fly.dev"
     const val ORIGIN = "https://$HOST"
     const val START_URL = "$ORIGIN/"
+    const val SHELL_HOST = "appassets.androidplatform.net"
+    const val SHELL_URL = "https://$SHELL_HOST/cabin/index.html"
 
     enum class BackAction {
         GO_BACK_IN_PAGE,
@@ -29,8 +31,15 @@ object CabinUrls {
         return uri.port == -1 || uri.port == 443
     }
 
+    fun isShellUrl(raw: String?): Boolean {
+        val uri = parseWebUri(raw) ?: return false
+        if (uri.scheme != "https" || uri.userInfo != null) return false
+        val host = uri.host?.lowercase(Locale.US) ?: return false
+        return host == SHELL_HOST
+    }
+
     fun isExternalWebUrl(raw: String?): Boolean {
-        if (isInAppUrl(raw)) return false
+        if (isInAppUrl(raw) || isShellUrl(raw)) return false
         val uri = parseWebUri(raw) ?: return false
         if (uri.scheme != "https" && uri.scheme != "http") return false
         if (uri.userInfo != null) return false

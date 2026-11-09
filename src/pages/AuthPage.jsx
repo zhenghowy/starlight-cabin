@@ -40,8 +40,13 @@ export function AuthPage({ mode, onSubmit, onSwitch, error, busy }) {
         <p className="auth-kicker">星空下的林中小屋</p>
         <h1>{isRegister ? '种下一颗种子' : '回到你的营地'}</h1>
         <p className="auth-lead">
-          {isRegister ? '给自己取一个林间名字。这片森林很小，只留给你和几位朋友。' : '森林在安静地等你。登录之后，看见的是你自己的小屋。'}
+          {isRegister
+            ? '给自己取一个林间名字。这片森林很小，只留给你和几位朋友。'
+            : '森林在安静地等你。登录之后，看见的是你自己的小屋。'}
         </p>
+        {typeof window !== 'undefined' && window.CabinNative ? (
+          <p className="field-hint">第一次要联网，把线上的营地取回来。密码不会留在手机里。取回之后，断网也能记。卸载或清除数据会丢掉还没同步的记录。</p>
+        ) : null}
 
         <label className="field">
           <span>林间名字</span>

@@ -74,6 +74,18 @@ button:disabled { cursor: default; }
   font-weight: 600;
   letter-spacing: 0.04em;
 }
+.nav-sync {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: rgba(255, 253, 247, 0.88);
+  font-size: 14px;
+  padding: 8px 10px;
+}
+.sync-conflicts { margin: 0 0 10px; padding-left: 18px; color: #8d5b49; font-size: 13px; }
 .nav-leave {
   position: absolute;
   right: 8px;

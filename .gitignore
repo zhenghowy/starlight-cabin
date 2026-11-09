@@ -29,6 +29,8 @@ android/local.properties
 android/captures/
 *.apk
 !public/downloads/starlight-cabin-sideload-1.0.0.apk
+!public/downloads/starlight-cabin-sideload-1.1.0.apk
+android/app/src/main/assets/cabin/
 *.aab
 *.idsig
 
