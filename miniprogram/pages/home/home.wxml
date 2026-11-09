@@ -1,0 +1,50 @@
+<view class="page" wx:if="{{ready}}">
+  <view class="card">
+    <view class="row">
+      <view class="cones {{pineCones < 0 ? 'minus' : ''}}">{{pineCones}} 松果</view>
+      <button class="btn btn-quiet leave" bindtap="onLeave">离开</button>
+    </view>
+    <view>{{greeting}}</view>
+    <view class="muted">{{levelWord}} · {{username}}</view>
+  </view>
+
+  <view class="card">
+    <view class="row"><text>上次成功</text><text>{{sync.lastSyncText}}</text></view>
+    <view class="row"><text>还没同步</text><text>{{sync.pending}} 条</text></view>
+    <view class="muted">大约每 7 天打开且有网时同步。微信不能保证后台每周执行。也可以随时手动同步。</view>
+    <view class="error" wx:if="{{sync.authExpired}}">登录已过期。本机记录还在，重新登录后才能继续同步。</view>
+    <view class="error" wx:if="{{sync.lastError}}">{{sync.lastError}}</view>
+    <view class="error" wx:for="{{sync.conflicts}}" wx:key="id">{{item.error}}</view>
+    <button class="btn" loading="{{syncing}}" disabled="{{syncing}}" bindtap="onSync">立即同步</button>
+    <button class="btn btn-quiet" bindtap="onBackup">复制备份到剪贴板</button>
+    <view class="muted">备份不含密码和登录凭证。清除小程序或删除数据会丢掉未同步记录。没有开启微信云备份。</view>
+  </view>
+
+  <view class="card" wx:for="{{attrs}}" wx:key="key">
+    <view class="row"><text>{{item.icon}} {{item.name}}</text><text>Lv.{{item.level}}</text></view>
+    <view class="bar"><view class="fill" style="width: {{item.percent}}%; background: {{item.color}};"></view></view>
+    <view class="muted">{{item.source}} · {{item.percent}}%</view>
+  </view>
+
+  <view class="row head"><text class="section">今日小事</text><text class="muted">{{doneCount}}/{{taskCount}}</text></view>
+  <view class="card task" wx:for="{{tasks}}" wx:key="id">
+    <view class="task-name">{{item.name}}</view>
+    <view class="muted {{item.negative ? 'minus' : ''}}">{{item.rewardLine}}</view>
+    <view class="row">
+      <button class="mini" data-id="{{item.id}}" data-name="{{item.name}}" bindtap="onRemove">移除</button>
+      <button class="mini check" wx:if="{{!item.done}}" data-id="{{item.id}}" bindtap="onCheckIn">打卡</button>
+      <text wx:else class="muted">已打卡</text>
+    </view>
+  </view>
+  <button class="btn" bindtap="toggleAdd">种下一件小事</button>
+  <view class="card" wx:if="{{adding}}">
+    <picker mode="selector" range="{{types}}" value="{{typeIndex}}" bindchange="onType">
+      <view class="field">类型：{{types[typeIndex]}}</view>
+    </picker>
+    <input class="input" maxlength="40" placeholder="今天想做的小事" value="{{name}}" bindinput="onName" />
+    <input class="input" placeholder="大约几分钟，可空" value="{{minutes}}" bindinput="onMinutes" />
+    <input class="input" placeholder="松果，正数加上，负数扣掉" value="{{reward}}" bindinput="onReward" />
+    <view class="muted">1 分钟 = 1 枚松果。好事用正数，放纵用负数。</view>
+    <button class="btn" bindtap="onAdd">种下</button>
+  </view>
+</view>

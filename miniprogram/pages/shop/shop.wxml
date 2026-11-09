@@ -1,0 +1,20 @@
+<view class="page" wx:if="{{ready}}">
+  <view class="card">
+    <view class="cones {{pineCones < 0 ? 'minus' : ''}}">{{pineCones}} 松果</view>
+    <view class="muted">心愿记在手机里。正数兑换时花掉，负数兑换时退回。这里不使用微信支付。</view>
+  </view>
+  <view class="card" wx:for="{{shopItems}}" wx:key="id">
+    <view class="row"><text>{{item.name}}</text><text class="{{item.cost < 0 ? 'minus' : ''}}">{{item.costLine}}</text></view>
+    <view class="row">
+      <button class="mini" data-id="{{item.id}}" bindtap="onRemove">移除</button>
+      <button class="mini check" data-id="{{item.id}}" data-name="{{item.name}}" disabled="{{!item.affordable}}" bindtap="onRedeem">兑换</button>
+    </view>
+  </view>
+  <button class="btn" bindtap="toggleAdd">添加一个心愿</button>
+  <view class="card" wx:if="{{adding}}">
+    <input class="input" maxlength="40" placeholder="想奖励自己的事" value="{{name}}" bindinput="onName" />
+    <input class="input" placeholder="大约几分钟，可空" value="{{minutes}}" bindinput="onMinutes" />
+    <input class="input" placeholder="松果价格，负数表示退回" value="{{cost}}" bindinput="onCost" />
+    <button class="btn" bindtap="onAdd">记下</button>
+  </view>
+</view>

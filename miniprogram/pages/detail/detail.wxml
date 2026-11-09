@@ -1,0 +1,19 @@
+<view class="page" wx:if="{{ready}}">
+  <view class="card muted" wx:if="{{hasBoard}}">这是 {{boardText}} 同步下来的排行，不是现在的实时排名。</view>
+  <view class="card" wx:if="{{missing}}">这片林子里没有这位朋友，或排行还没有同步。</view>
+  <block wx:else>
+    <view class="card">
+      <view class="title">{{entry.username}}</view>
+      <view class="muted">{{entry.levelWord}} · {{entry.pineCones}} 松果</view>
+      <view class="muted">连续 {{entry.streak}} 天 · 累计 {{entry.totalDays}} 天 · 本月 {{entry.monthTotal}} 天</view>
+      <view class="muted">今天 {{entry.todayDone}}/{{entry.todayTotal}}</view>
+    </view>
+    <view class="card" wx:for="{{entry.attrs}}" wx:key="key">
+      <view class="row"><text>{{item.icon}} {{item.name}}</text><text>Lv.{{item.level}}</text></view>
+    </view>
+    <view class="card" wx:if="{{entry.recentTasks.length}}">
+      <view class="muted">上次同步时今天已完成</view>
+      <view wx:for="{{entry.recentTasks}}" wx:for-item="task" wx:key="name">{{task.icon}} {{task.name}}</view>
+    </view>
+  </block>
+</view>

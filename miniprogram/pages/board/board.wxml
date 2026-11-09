@@ -1,0 +1,11 @@
+<view class="page" wx:if="{{ready}}">
+  <view class="card muted" wx:if="{{hasBoard}}">这是 {{boardText}} 同步下来的排行，不是现在的实时排名。</view>
+  <view class="card muted" wx:else>还没有排行快照。有网时点营地里的「立即同步」。</view>
+  <view class="card row" wx:for="{{board}}" wx:key="id" data-id="{{item.id}}" bindtap="onOpen">
+    <view>
+      <view>{{item.rank}}. {{item.username}} <text wx:if="{{item.me}}">你</text></view>
+      <view class="muted">{{item.levelWord}} · {{item.pineCones}} 松果 · 连续 {{item.streak}} 天</view>
+    </view>
+    <text class="muted">查看</text>
+  </view>
+</view>

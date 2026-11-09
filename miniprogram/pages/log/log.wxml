@@ -1,0 +1,20 @@
+<view class="page" wx:if="{{ready}}">
+  <view class="card poem">{{poem}}</view>
+  <view class="stats">
+    <view class="card stat"><text class="num">{{totalDays}}</text><text class="muted">累计天数</text></view>
+    <view class="card stat"><text class="num">{{streak}}</text><text class="muted">连续天数</text></view>
+    <view class="card stat"><text class="num">{{monthTotal}}</text><text class="muted">本月天数</text></view>
+  </view>
+  <view class="card">
+    <view class="section">打卡墙 · 近 12 周</view>
+    <scroll-view scroll-x class="heat">
+      <view class="weeks">
+        <view class="week" wx:for="{{grid}}" wx:key="index">
+          <view class="label">{{item.label}}</view>
+          <view class="cell {{day.lit ? 'lit' : ''}} {{day.future ? 'future' : ''}}" wx:for="{{item.days}}" wx:for-item="day" wx:key="date"></view>
+        </view>
+      </view>
+    </scroll-view>
+    <view class="muted">空白的日子不是失败，只是森林在安静地陪你。</view>
+  </view>
+</view>
