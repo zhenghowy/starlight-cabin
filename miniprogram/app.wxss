@@ -128,6 +128,44 @@ button.pill {
   padding: 0 !important;
   display: inline-block;
 }
+button.hit-check {
+  width: 88rpx !important;
+  min-width: 88rpx !important;
+  max-width: 88rpx !important;
+  height: 88rpx !important;
+  flex: 0 0 88rpx !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+button.hit-check::after { border: none; }
+.pill-face {
+  width: 72rpx;
+  height: 44rpx;
+  line-height: 42rpx;
+  border-radius: 999rpx;
+  border: 1px solid #c5d4c3;
+  background: #f4f7f3;
+  color: #5f7d5e;
+  font-size: 22rpx;
+  text-align: center;
+}
+.done-mark {
+  flex: 0 0 auto;
+  height: 44rpx;
+  line-height: 42rpx;
+  padding: 0 14rpx;
+  border-radius: 999rpx;
+  border: 1px solid #e6dfd2;
+  background: transparent;
+  color: #a39a90;
+  font-size: 22rpx;
+}
 button.mini-remove {
   width: 88rpx !important;
   min-width: 88rpx !important;

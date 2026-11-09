@@ -30,8 +30,8 @@
     </view>
     <view class="row-actions">
       <button class="mini-remove" data-id="{{item.id}}" data-name="{{item.name}}" bindtap="onRemove">×</button>
-      <button class="pill pill-moss" wx:if="{{!item.done}}" data-id="{{item.id}}" bindtap="onCheckIn">打卡</button>
-      <view class="pill pill-done" wx:else>已打卡</view>
+      <button class="hit-check" wx:if="{{!item.done}}" data-id="{{item.id}}" bindtap="onCheckIn"><view class="pill-face">打卡</view></button>
+      <view class="done-mark" wx:else>已打卡</view>
     </view>
   </view>
   <button class="add" bindtap="openTypes"><text class="add-plus">+</text><text>种下一件小事</text></button>
